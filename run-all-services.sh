@@ -5,11 +5,22 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKEND="$ROOT/ecom-backend"
 
 : "${MYSQL_PASSWORD:=root}"
-: "${JWT_SECRET:?Set JWT_SECRET to a random secret of at least 32 characters}"
-: "${ORDER_SYNC_KEY:?Set ORDER_SYNC_KEY}"
-: "${PAYMENT_SYNC_KEY:?Set PAYMENT_SYNC_KEY}"
-: "${FULFILLMENT_SYNC_KEY:?Set FULFILLMENT_SYNC_KEY}"
+: "${ORDER_SYNC_KEY:=local-order-sync-key-change-me}"
+: "${PAYMENT_SYNC_KEY:=local-payment-sync-key-change-me}"
+: "${FULFILLMENT_SYNC_KEY:=local-fulfillment-sync-key-change-me}"
 : "${INVENTORY_SYNC_KEY:=client-demo-inventory-sync-key-2026-strong}"
+
+SECRET_FILE="$ROOT/.local/jwt.secret"
+mkdir -p "$ROOT/.local/logs"
+if [[ -z "${JWT_SECRET:-}" ]]; then
+  if [[ -f "$SECRET_FILE" ]]; then
+    JWT_SECRET="$(cat "$SECRET_FILE")"
+  else
+    JWT_SECRET="$(openssl rand -base64 48 | tr -d '\n')"
+    printf '%s' "$JWT_SECRET" > "$SECRET_FILE"
+    chmod 600 "$SECRET_FILE"
+  fi
+fi
 
 SERVICES=(
   "Ecom-eureka-server:8761"
@@ -26,7 +37,6 @@ SERVICES=(
   "Ecom-api-gateway:8082"
 )
 
-mkdir -p "$ROOT/.local/logs"
 export MYSQL_PASSWORD JWT_SECRET ORDER_SYNC_KEY PAYMENT_SYNC_KEY FULFILLMENT_SYNC_KEY INVENTORY_SYNC_KEY
 
 for entry in "${SERVICES[@]}"; do
