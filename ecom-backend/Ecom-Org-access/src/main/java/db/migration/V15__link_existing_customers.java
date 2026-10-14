@@ -10,6 +10,9 @@ import org.flywaydb.core.api.migration.Context;
  * new UUIDs to customers whose orders already reference an existing profile UUID. */
 public class V15__link_existing_customers extends BaseJavaMigration {
   @Override public void migrate(Context context) throws Exception {
+    if (Boolean.parseBoolean(System.getenv().getOrDefault("CUSTOMER_MIGRATION_SKIP", "false"))) {
+      return;
+    }
     String url = System.getenv("CUSTOMER_MIGRATION_JDBC_URL");
     if (url == null || url.isBlank()) throw new IllegalStateException(
         "Set CUSTOMER_MIGRATION_JDBC_URL to the existing customer_profiles database before migrating.");
