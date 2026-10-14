@@ -46,6 +46,11 @@ SERVICES=(
 
 export MYSQL_HOST MYSQL_PORT MYSQL_USERNAME MYSQL_PASSWORD JWT_SECRET ORDER_SYNC_KEY PAYMENT_SYNC_KEY FULFILLMENT_SYNC_KEY INVENTORY_SYNC_KEY
 
+if [[ -d "$BACKEND/http-sync" ]]; then
+  echo "Installing shared http-sync library"
+  (cd "$BACKEND/http-sync" && mvn install -DskipTests)
+fi
+
 start_service() {
   local entry="$1"
   local service="${entry%%:*}"
