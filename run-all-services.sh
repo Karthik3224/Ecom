@@ -4,7 +4,10 @@ set -Eeuo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKEND="$ROOT/ecom-backend"
 
-: "${MYSQL_PASSWORD:=root}"
+: "${MYSQL_HOST:=localhost}"
+: "${MYSQL_PORT:=3306}"
+: "${MYSQL_USERNAME:=root}"
+: "${MYSQL_PASSWORD:=}"
 : "${ORDER_SYNC_KEY:=local-order-sync-key-change-me}"
 : "${PAYMENT_SYNC_KEY:=local-payment-sync-key-change-me}"
 : "${FULFILLMENT_SYNC_KEY:=local-fulfillment-sync-key-change-me}"
@@ -12,6 +15,10 @@ BACKEND="$ROOT/ecom-backend"
 
 SECRET_FILE="$ROOT/.local/jwt.secret"
 mkdir -p "$ROOT/.local/logs"
+if [[ -z "$MYSQL_PASSWORD" ]]; then
+  read -r -s -p "MySQL password for $MYSQL_USERNAME: " MYSQL_PASSWORD
+  echo
+fi
 if [[ -z "${JWT_SECRET:-}" ]]; then
   if [[ -f "$SECRET_FILE" ]]; then
     JWT_SECRET="$(cat "$SECRET_FILE")"
@@ -37,12 +44,13 @@ SERVICES=(
   "Ecom-api-gateway:8082"
 )
 
-export MYSQL_PASSWORD JWT_SECRET ORDER_SYNC_KEY PAYMENT_SYNC_KEY FULFILLMENT_SYNC_KEY INVENTORY_SYNC_KEY
+export MYSQL_HOST MYSQL_PORT MYSQL_USERNAME MYSQL_PASSWORD JWT_SECRET ORDER_SYNC_KEY PAYMENT_SYNC_KEY FULFILLMENT_SYNC_KEY INVENTORY_SYNC_KEY
 
-for entry in "${SERVICES[@]}"; do
-  service="${entry%%:*}"
-  port="${entry##*:}"
-  module="$BACKEND/$service"
+start_service() {
+  local entry="$1"
+  local service="${entry%%:*}"
+  local port="${entry##*:}"
+  local module="$BACKEND/$service"
   if [[ ! -d "$module" ]]; then
     echo "Missing backend module: $module" >&2
     exit 1
@@ -53,6 +61,30 @@ for entry in "${SERVICES[@]}"; do
     nohup mvn spring-boot:run -DskipTests >"$ROOT/.local/logs/$service.log" 2>&1 &
     echo $! >"$ROOT/.local/$service.pid"
   )
+}
+
+wait_for_port() {
+  local port="$1"
+  local name="$2"
+  for _ in {1..60}; do
+    if (echo >/dev/tcp/127.0.0.1/"$port") >/dev/null 2>&1; then
+      echo "$name is ready on port $port"
+      return 0
+    fi
+    sleep 2
+  done
+  echo "$name did not become ready on port $port" >&2
+  tail -n 40 "$ROOT/.local/logs/${name}.log" >&2 || true
+  exit 1
+}
+
+start_service "Ecom-eureka-server:8761"
+wait_for_port 8761 "Ecom-eureka-server"
+start_service "Ecom-config-server:8888"
+wait_for_port 8888 "Ecom-config-server"
+
+for entry in "${SERVICES[@]:2}"; do
+  start_service "$entry"
 done
 
 echo "Backend startup launched. Check logs under $ROOT/.local/logs."
