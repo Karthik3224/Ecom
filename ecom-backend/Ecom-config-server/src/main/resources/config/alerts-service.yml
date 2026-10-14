@@ -1,0 +1,29 @@
+server:
+  port: ${SERVER_PORT:8087}
+
+spring:
+  kafka:
+    bootstrap-servers: "${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}"
+    consumer:
+      group-id: alerts-service-group
+      house-created-group-id: alerts-service-house-created-v1
+  mail:
+    host: "${MAIL_HOST:smtp.gmail.com}"
+    port: ${MAIL_PORT:587}
+    username: "${MAIL_USERNAME:}"
+    password: "${MAIL_PASSWORD:}"
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+app:
+  jwt:
+    secret: "${JWT_SECRET:change-this-secret-to-a-long-random-string}"
+  kafka:
+    booking-alert-topic: booking-alerts-topic
+    house-created-topic: house-created-topic
+  mail:
+    from: "${MAIL_FROM:${MAIL_USERNAME:}}"

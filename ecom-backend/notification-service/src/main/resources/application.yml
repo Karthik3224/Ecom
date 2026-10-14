@@ -1,0 +1,76 @@
+server:
+  port: ${SERVER_PORT:3317}
+spring:
+  application:
+    name: notification-service
+  config:
+    import: "optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}"
+  
+
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DB:notification_service}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: ${MYSQL_USERNAME:root}
+    password: ${MYSQL_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # Spring Data JPA & Hibernate Settings
+  jpa:
+    open-in-view: false
+    database-platform: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        show_sql: true
+        format_sql: true
+        highlight_sql: true
+        # Connection Pool optimization parameters
+        connection:
+          autocommit: false
+
+  flyway:
+    enabled: ${FLYWAY_ENABLED:false}
+    baseline-on-migrate: ${FLYWAY_BASELINE_ON_MIGRATE:true}
+
+  mail:
+    host: ${SMTP_HOST:}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail.smtp.auth: ${SMTP_AUTH:true}
+      mail.smtp.starttls.enable: ${SMTP_STARTTLS_ENABLE:true}
+org-access:
+  service:
+    url: ${ORG_ACCESS_SERVICE_URL:http://localhost:3310}
+    token: ${ORG_ACCESS_TOKEN:}
+notification:
+  sending:
+    enabled: ${NOTIFICATION_SENDING_ENABLED:true}
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+sync:
+  service: notification-service
+  keys:
+    order-service: ${ORDER_SYNC_KEY:}
+    payment-service: ${PAYMENT_SYNC_KEY:}
+    fulfillment-service: ${FULFILLMENT_SYNC_KEY:}
+  targets:
+    order-service: ${ORDER_SERVICE_URL:http://localhost:3311}
+    payment-service: ${PAYMENT_SERVICE_URL:http://localhost:3314}
+    fulfillment-service: ${FULFILLMENT_SERVICE_URL:http://localhost:3315}
+    notification-service: ${NOTIFICATION_SERVICE_URL:http://localhost:3317}
+  routes:
+    unused: notification-service

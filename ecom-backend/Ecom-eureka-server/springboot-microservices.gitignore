@@ -1,0 +1,61 @@
+# Maven / Gradle build output
+target/
+build/
+out/
+
+# Java compiled files
+*.class
+*.jar
+*.war
+*.ear
+
+# Logs
+logs/
+*.log
+
+# Spring Boot
+.springBeans
+.springBeans.log
+
+# Application secrets / configs
+
+
+# Microservices runtime artifacts
+*/target/
+*/logs/
+*/tmp/
+discovery-server/data/
+config-server/repos/
+
+# IDE
+.idea/
+*.iml
+.project
+.classpath
+.settings/
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker / containers
+docker-data/
+mysql-data/
+postgres-data/
+*.pid
+
+# Test reports
+surefire-reports/
+coverage/
+jacoco.exec
+
+# Node (if frontend inside microservices repo)
+node_modules/
+dist/
+npm-debug.log
+
+# Kubernetes / Helm local secrets
+*.kubeconfig
+secrets.yaml
+values-local.yaml

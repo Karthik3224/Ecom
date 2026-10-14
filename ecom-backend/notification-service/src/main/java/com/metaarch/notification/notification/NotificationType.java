@@ -1,0 +1,13 @@
+package com.metaarch.notification.notification;
+
+public enum NotificationType {
+  ORDER_CREATED,
+  ORDER_STATUS_UPDATED,
+  ORDER_CANCELLED,
+  PAYMENT_SUCCESS,
+  PAYMENT_FAILED,
+  PAYMENT_REFUNDED,
+  FULFILLMENT_CREATED,
+  SHIPMENT_CREATED,
+  SHIPMENT_DELIVERED
+}

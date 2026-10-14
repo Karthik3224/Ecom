@@ -1,0 +1,30 @@
+INSERT INTO stores(id, name, location, address, latitude, longitude, provider, location_accuracy_meters, phone, email, admin_name, delivery_enabled, pickup_enabled, active, created_at, updated_at)
+VALUES
+  ('india-store-1-1', 'Hyderabad Main Store', 'Hyderabad', 'Madhapur Main Road, Hyderabad, Telangana 500081, India', 17.4482948, 78.3914850, 'OPENSTREETMAP', 25.00, '+91 91000 20000', 'hyderabad-main@metaarch.local', 'Ramesh HYD Main', TRUE, TRUE, TRUE, NOW(6), NOW(6)),
+  ('store-gachibowli', 'Gachibowli Fresh Hub', 'Hyderabad', 'DLF Road, Gachibowli, Hyderabad, Telangana 500032, India', 17.4434778, 78.3771953, 'OPENSTREETMAP', 20.00, '+91 91000 20001', 'gachibowli@metaarch.local', 'Sravani Gachibowli', TRUE, TRUE, TRUE, NOW(6), NOW(6)),
+  ('store-banjara', 'Banjara Hills Pickle House', 'Hyderabad', 'Road No. 12, Banjara Hills, Hyderabad, Telangana 500034, India', 17.4138277, 78.4397573, 'OPENSTREETMAP', 25.00, '+91 91000 20002', 'banjara@metaarch.local', 'Mahesh Banjara', TRUE, TRUE, TRUE, NOW(6), NOW(6)),
+  ('store-secunderabad', 'Secunderabad Daily Foods', 'Hyderabad', 'Sardar Patel Road, Secunderabad, Telangana 500003, India', 17.4399295, 78.4982741, 'OPENSTREETMAP', 30.00, '+91 91000 20003', 'secunderabad@metaarch.local', 'Anil Secunderabad', TRUE, FALSE, TRUE, NOW(6), NOW(6)),
+  ('store-benzcircle', 'Benz Circle Fresh Basket', 'Vijayawada', 'Benz Circle, Vijayawada, Andhra Pradesh 520010, India', 16.5061743, 80.6480153, 'OPENSTREETMAP', 20.00, '+91 91000 20007', 'benzcircle@metaarch.local', 'Lakshmi Benz Circle', TRUE, TRUE, TRUE, NOW(6), NOW(6)),
+  ('store-governorpet', 'Governorpet Spice Store', 'Vijayawada', 'Governorpet, Vijayawada, Andhra Pradesh 520002, India', 16.5131048, 80.6298704, 'OPENSTREETMAP', 30.00, '+91 91000 20008', 'governorpet@metaarch.local', 'Ravi Governorpet', TRUE, TRUE, TRUE, NOW(6), NOW(6)),
+  ('store-poranki', 'Poranki Fresh Mart', 'Vijayawada', 'Poranki, Vijayawada, Andhra Pradesh 521137, India', 16.4749723, 80.7125405, 'OPENSTREETMAP', 35.00, '+91 91000 20009', 'poranki@metaarch.local', 'Sneha Poranki', TRUE, TRUE, TRUE, NOW(6), NOW(6)),
+  ('store-tnagar', 'T Nagar Family Foods', 'Chennai', 'Usman Road, T Nagar, Chennai, Tamil Nadu 600017, India', 13.0418068, 80.2341001, 'OPENSTREETMAP', 20.00, '+91 91000 20006', 'tnagar@metaarch.local', 'Arun T Nagar', TRUE, TRUE, TRUE, NOW(6), NOW(6)),
+  ('store-adyar', 'Adyar Organic Basket', 'Chennai', 'Lattice Bridge Road, Adyar, Chennai, Tamil Nadu 600020, India', 13.0064500, 80.2577799, 'OPENSTREETMAP', 25.00, '+91 91000 20010', 'adyar@metaarch.local', 'Divya Adyar', TRUE, TRUE, TRUE, NOW(6), NOW(6)),
+  ('store-velachery', 'Velachery Daily Foods', 'Chennai', 'Velachery Main Road, Velachery, Chennai, Tamil Nadu 600042, India', 12.9759710, 80.2212092, 'OPENSTREETMAP', 30.00, '+91 91000 20011', 'velachery@metaarch.local', 'Karthik Velachery', TRUE, TRUE, TRUE, NOW(6), NOW(6)),
+  ('store-koramangala', 'Koramangala Gourmet Mart', 'Bengaluru', '5th Block, Koramangala, Bengaluru, Karnataka 560095, India', 12.9352403, 77.6245320, 'OPENSTREETMAP', 20.00, '+91 91000 20004', 'koramangala@metaarch.local', 'Kiran Koramangala', TRUE, TRUE, TRUE, NOW(6), NOW(6)),
+  ('store-indiranagar', 'Indiranagar Organic Foods', 'Bengaluru', '100 Feet Road, Indiranagar, Bengaluru, Karnataka 560038, India', 12.9783717, 77.6408356, 'OPENSTREETMAP', 20.00, '+91 91000 20005', 'indiranagar@metaarch.local', 'Neha Indiranagar', TRUE, TRUE, TRUE, NOW(6), NOW(6)),
+  ('store-whitefield', 'Whitefield Fresh Basket', 'Bengaluru', 'Whitefield Main Road, Whitefield, Bengaluru, Karnataka 560066, India', 12.9698196, 77.7499721, 'OPENSTREETMAP', 30.00, '+91 91000 20012', 'whitefield@metaarch.local', 'Manoj Whitefield', TRUE, TRUE, TRUE, NOW(6), NOW(6))
+ON DUPLICATE KEY UPDATE
+  name = VALUES(name),
+  location = VALUES(location),
+  address = VALUES(address),
+  latitude = VALUES(latitude),
+  longitude = VALUES(longitude),
+  provider = VALUES(provider),
+  location_accuracy_meters = VALUES(location_accuracy_meters),
+  phone = VALUES(phone),
+  email = VALUES(email),
+  admin_name = VALUES(admin_name),
+  delivery_enabled = VALUES(delivery_enabled),
+  pickup_enabled = VALUES(pickup_enabled),
+  active = VALUES(active),
+  updated_at = NOW(6);

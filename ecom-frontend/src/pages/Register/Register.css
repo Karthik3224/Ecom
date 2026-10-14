@@ -1,0 +1,223 @@
+/* Background styling for the entire page */
+.register-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+/* Header bar styling */
+.register-wrapper .register-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 70px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 4vw;
+  z-index: 10;
+}
+
+.register-wrapper .register-header .header-btn {
+  text-transform: none;
+  font-weight: 600;
+  font-size: 15px;
+  color: #0B6E4F;
+}
+
+.register-wrapper .register-header .header-btn:hover {
+  background-color: rgba(11, 110, 79, 0.08);
+}
+
+.register-wrapper .register-container {
+  display: grid;
+  grid-template-columns: 48% 52%;
+  width: 100%;
+  height: calc(100vh - 70px);
+  margin-top: 50px;
+}
+
+.register-wrapper .register-left {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2vh 4vw;
+  border-right: 1px solid rgba(0, 0, 0, 0.08);
+  text-align: center;
+  overflow: hidden;
+}
+
+.register-wrapper .register-logo {
+  width: 150px;
+}
+
+.register-wrapper .banner-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0B6E4F;
+  margin-bottom: 8px;
+}
+
+.register-wrapper .banner-subtitle {
+  font-size: 14px;
+  color: #555;
+  max-width: 360px;
+  line-height: 1.4;
+  margin-top: 16px;
+}
+
+.register-wrapper .pickle-image {
+  max-width: 50%;
+  max-height: 28vh;
+  object-fit: contain;
+  filter: drop-shadow(0px 8px 24px rgba(0, 0, 0, 0.08));
+}
+
+/* Right column styling */
+.register-wrapper .register-right {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2vh 4vw;
+  overflow: hidden;
+}
+
+.register-wrapper .form-container {
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.register-wrapper .form-subtitle {
+  font-size: 16px;
+  color: #0B6E4F;
+  font-weight: 600;
+  margin-bottom: 16px;
+  letter-spacing: 0.5px;
+}
+
+.register-wrapper .register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+
+.custom-input,
+.custom-select-input {
+  height: 44px !important;
+  background-color: #ffffff !important;
+  border-radius: 12px !important;
+}
+
+.custom-input .MuiInputBase-root,
+.custom-select-input.MuiInputBase-root {
+  height: 44px !important;
+  border-radius: 12px !important;
+}
+
+.custom-input .MuiInputBase-input,
+.custom-select-input .MuiSelect-select {
+  height: 44px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  padding-left: 14px !important;
+  display: flex !important;
+  align-items: center !important;
+  box-sizing: border-box !important;
+}
+
+.custom-input .MuiOutlinedInput-notchedOutline,
+.custom-select-input .MuiOutlinedInput-notchedOutline {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  border-radius: 12px !important;
+}
+
+.custom-input:hover .MuiOutlinedInput-notchedOutline,
+.custom-select-input:hover .MuiOutlinedInput-notchedOutline {
+  border-color: rgba(11, 110, 79, 0.3) !important;
+}
+
+.custom-input.Mui-focused .MuiOutlinedInput-notchedOutline,
+.custom-select-input.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #0B6E4F !important;
+  border-width: 1.5px !important;
+}
+
+.register-wrapper .phone-row-container {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.register-wrapper .country-code-control {
+  width: 80px;
+  flex-shrink: 0;
+}
+
+.register-wrapper .country-select .MuiSelect-select {
+  padding-right: 24px !important;
+  padding-left: 12px !important;
+  font-weight: 500;
+  color: #333;
+}
+
+.register-wrapper .disclaimer-text{
+  font-size: 10px;
+  max-width: 350px;
+  text-align: center;
+  margin-left: 26px;
+}
+
+.register-wrapper .footer-agreement-text {
+  font-size: 10px;
+  text-align: center;
+}
+
+.register-wrapper .policy-link {
+  color: #0B6E4F !important;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.register-wrapper .disclaimer-link {
+  color: #0B6E4F !important;
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+/* Get OTP Button styling */
+.submit-btn {
+  background-color: #0B6E4F !important;
+  color: #fff !important;
+  height: 44px !important;
+  padding: 0 !important;
+  border-radius: 12px !important;
+  text-transform: none !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  margin-top: 10px !important;
+  box-shadow: 0 4px 12px rgba(11, 110, 79, 0.15) !important;
+  transition: all 0.2s ease !important;
+}
+
+.submit-btn:hover {
+  background-color: #08543C !important;
+  box-shadow: 0 6px 16px rgba(11, 110, 79, 0.25) !important;
+}
+
+.submit-btn:disabled {
+  background-color: #ccc !important;
+  color: #888 !important;
+  box-shadow: none !important;
+}
+
+

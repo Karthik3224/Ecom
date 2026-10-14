@@ -1,0 +1,27 @@
+spring:
+  cloud:
+    config:
+      enabled: false
+    discovery:
+      enabled: false
+  autoconfigure:
+    exclude:
+      - org.springframework.cloud.netflix.eureka.EurekaClientAutoConfiguration
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: alerts-service-test-group
+      house-created-group-id: alerts-service-house-created-test-group
+
+app:
+  jwt:
+    secret: change-this-secret-to-a-long-random-string
+  kafka:
+    booking-alert-topic: booking-alerts-topic
+    house-created-topic: house-created-topic
+  mail:
+    from: test@example.com
+
+eureka:
+  client:
+    enabled: false

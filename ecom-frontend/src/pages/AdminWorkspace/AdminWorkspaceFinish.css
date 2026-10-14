@@ -1,0 +1,13 @@
+.admin-workspace {
+  position: relative;
+}
+
+.admin-workspace > .brand-loader {
+  position: absolute;
+  inset: 68px 0 0;
+  z-index: 6;
+  min-height: calc(100vh - 68px);
+  background: rgba(245, 248, 246, 0.94);
+  backdrop-filter: blur(2px);
+}
+.MuiPopover-root,.MuiMenu-root{z-index:1600!important}.MuiMenu-paper{max-height:320px!important}

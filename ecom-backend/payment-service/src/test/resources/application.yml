@@ -1,0 +1,23 @@
+app:
+  jwt:
+    secret: qualification-only-secret-at-least-64-characters-not-for-deployment
+    issuer: org-access
+spring:
+  application:
+    name: payment-service
+  config:
+    import: "optional:"
+  datasource:
+    url: jdbc:h2:mem:payment_service;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+  flyway:
+    enabled: false
+eureka:
+  client:
+    enabled: false

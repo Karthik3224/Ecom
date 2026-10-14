@@ -1,0 +1,21 @@
+# Render only after DOMAIN, certificate paths and release directory are verified.
+server {
+    listen 443 ssl;
+    server_name __DOMAIN__;
+    ssl_certificate __CERTIFICATE_PATH__;
+    ssl_certificate_key __PRIVATE_KEY_PATH__;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    root /opt/ecom/current/frontend;
+    index index.html;
+    client_max_body_size 5m;
+    add_header X-Content-Type-Options nosniff always;
+    add_header Referrer-Policy strict-origin-when-cross-origin always;
+    location /org-access/api/ { proxy_pass http://127.0.0.1:3310/api/; }
+    location /customer-profile/api/v1/ { proxy_pass http://127.0.0.1:8088/api/v1/; }
+    location /catalog/api/v1/ { proxy_pass http://127.0.0.1:8089/api/v1/; }
+    location /cart-api/api/v1/ { proxy_pass http://127.0.0.1:8091/api/v1/; }
+    location /order-api/api/v1/ { proxy_pass http://127.0.0.1:3311/api/v1/; }
+    location /payments/api/v1/ { proxy_pass http://127.0.0.1:3314/api/v1/; }
+    location /fulfillment/api/v1/ { proxy_pass http://127.0.0.1:3315/api/v1/; }
+    location / { try_files $uri $uri/ /index.html; }
+}

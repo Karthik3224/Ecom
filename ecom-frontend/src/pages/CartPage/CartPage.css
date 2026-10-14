@@ -1,0 +1,454 @@
+.cart-page-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #fbfbfb;
+  overflow: hidden;
+  position: relative;
+  font-family: 'Roboto', sans-serif;
+}
+
+/* Header Bar */
+.cart-page-header {
+  height: 56px;
+  background-color: #0B6E4F;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 12px;
+  z-index: 10;
+}
+
+.cart-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cart-page-title {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  font-size: 1.1rem !important;
+}
+
+/* Main Scrollable View */
+.cart-page-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 12px 140px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.empty-cart-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 60vh;
+  gap: 16px;
+}
+
+.shop-now-btn {
+  background-color: #0B6E4F !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+.shop-now-btn:hover {
+  background-color: #08543c !important;
+}
+
+/* Item Slot Cards */
+.cart-items-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cart-slot-card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e2e8f0;
+}
+
+.slot-banner {
+  background-color: #eef7f3;
+  border-bottom: 1px solid #d5ebd9;
+  padding: 8px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.slot-text {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #0B6E4F;
+}
+
+.change-slot-btn {
+  background-color: #0B6E4F !important;
+  color: #ffffff !important;
+  font-size: 0.7rem !important;
+  font-weight: 700 !important;
+  text-transform: none !important;
+  padding: 2px 10px !important;
+  border-radius: 12px !important;
+}
+
+.change-slot-btn:hover {
+  background-color: #08543c !important;
+}
+
+.slot-item-body {
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.slot-item-img {
+  width: 60px;
+  height: 60px;
+  border-radius: 10px;
+  background-color: #fef3c7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.slot-item-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.slot-item-info {
+  flex: 1;
+}
+
+.slot-item-title {
+  font-size: 0.88rem !important;
+  font-weight: 700 !important;
+  color: #1e293b;
+}
+
+.slot-item-weight {
+  font-size: 0.75rem !important;
+  color: #64748b;
+  margin: 2px 0 !important;
+}
+
+.slot-item-price {
+  font-size: 0.88rem !important;
+  font-weight: 800 !important;
+  color: #0f172a;
+}
+
+.slot-qty-selector {
+  display: flex;
+  align-items: center;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background-color: #f8fafc;
+  overflow: hidden;
+}
+
+.slot-qty-btn {
+  background: transparent;
+  border: none;
+  color: #0B6E4F;
+  font-weight: bold;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.slot-qty-count {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1e293b;
+  padding: 0 6px;
+}
+
+/* You May Also Like Section */
+.you-may-like-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.section-title-bold {
+  font-size: 1rem !important;
+  font-weight: 800 !important;
+  color: #1e293b;
+}
+
+.like-items-row {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.saved-later-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.saved-store-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.saved-store-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  background-color: #f0fdf4;
+  border-bottom: 1px solid #dcfce7;
+}
+
+.saved-store-title {
+  color: #0B6E4F;
+  font-size: 0.88rem !important;
+  font-weight: 800 !important;
+}
+
+.saved-store-count {
+  color: #64748b;
+  font-size: 0.75rem !important;
+  flex-shrink: 0;
+}
+
+.saved-item-row {
+  padding: 12px 14px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.saved-item-row:last-child {
+  border-bottom: 0;
+}
+
+.saved-item-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.saved-item-img {
+  width: 56px;
+  height: 56px;
+}
+
+.saved-item-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.saved-item-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-top: 4px;
+}
+
+/* Bill Summary Card */
+.cart-bill-summary-card {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 10px 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bill-divider-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bill-section-title {
+  font-size: 0.88rem !important;
+  font-weight: 700 !important;
+  color: #1e293b;
+  white-space: nowrap;
+}
+
+.bill-title-line {
+  flex: 1;
+  height: 1px;
+  background-color: #cbd5e1;
+}
+
+.bill-data-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+}
+
+.bill-item-label {
+  color: #64748b !important;
+}
+
+.bill-item-value {
+  font-weight: 700 !important;
+  color: #1e293b !important;
+}
+
+.bill-item-free {
+  font-weight: 700 !important;
+  color: #10b981 !important;
+}
+
+.grand-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 6px;
+  margin-top: 2px;
+}
+
+.grand-total-label {
+  font-size: 0.88rem !important;
+  font-weight: 800 !important;
+  color: #1e293b;
+}
+
+.grand-total-value {
+  font-size: 0.98rem !important;
+  font-weight: 800 !important;
+  color: #0f172a;
+}
+
+/* Sticky Checkout Footer */
+.cart-sticky-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: #ffffff;
+  border-top: 1px solid #e2e8f0;
+  padding: 10px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 20;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.delivery-address-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed #e2e8f0;
+}
+
+.address-info-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.address-header-line {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.address-home-icon {
+  color: #0B6E4F;
+  font-size: 16px !important;
+}
+
+.delivering-to-label {
+  font-size: 0.75rem !important;
+  color: #64748b !important;
+}
+
+.address-tag {
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.address-full-text {
+  font-size: 0.78rem !important;
+  font-weight: 600 !important;
+  color: #1e293b !important;
+  max-width: 260px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.change-address-btn {
+  color: #0B6E4F !important;
+  font-weight: 700 !important;
+  text-transform: none !important;
+  font-size: 0.75rem !important;
+  padding: 2px 8px !important;
+}
+
+.checkout-action-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.total-pay-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.total-pay-amount {
+  font-size: 1.15rem !important;
+  font-weight: 800 !important;
+  color: #1e293b !important;
+}
+
+.view-bill-text {
+  font-size: 0.65rem !important;
+  font-weight: 700 !important;
+  color: #0B6E4F !important;
+  letter-spacing: 0.5px;
+}
+
+.proceed-pay-btn {
+  background-color: #0B6E4F !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  text-transform: none !important;
+  padding: 8px 24px !important;
+  border-radius: 10px !important;
+  font-size: 0.9rem !important;
+  box-shadow: 0 4px 14px rgba(11, 110, 79, 0.3) !important;
+}
+
+.proceed-pay-btn:hover {
+  background-color: #08543c !important;
+}

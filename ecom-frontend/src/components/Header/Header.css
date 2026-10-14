@@ -1,0 +1,174 @@
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 4vw;
+  background-color: #ffffff;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.header-logo {
+  height: 50px;
+  object-fit: contain;
+}
+
+.header-user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.greeting {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: #333;
+}
+
+.delivery-location {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.deliver-to {
+  font-size: 12px !important;
+  color: #666;
+}
+
+.location {
+  color: #0B6E4F;
+  font-weight: 600;
+}
+
+.arrow-down {
+  font-size: 16px !important;
+  color: #0B6E4F;
+  cursor: pointer;
+}
+
+.header-search {
+  flex: 1;
+  min-width: 240px;
+  display: flex;
+  justify-content: center;
+  padding: 0 40px;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 600px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 4px 16px;
+  background-color: #ffffff !important;
+}
+
+.search-input {
+  flex: 1;
+  font-size: 14px !important;
+}
+
+.search-icon {
+  color: #666;
+  cursor: pointer;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.action-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  color: #333;
+}
+
+.action-item:hover {
+  color: #0B6E4F;
+}
+
+.action-icon {
+  font-size: 24px !important;
+  margin-bottom: 2px;
+}
+
+.action-text {
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+
+.cart-badge .MuiBadge-badge {
+  background-color: #0B6E4F;
+  color: white;
+  font-weight: bold;
+}
+
+/* Responsive Breakpoints for Header */
+@media (max-width: 768px) {
+  .header-container {
+    padding: 10px 14px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .header-left {
+    gap: 8px;
+  }
+
+  .header-logo {
+    height: 42px;
+  }
+
+  .greeting {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+  }
+
+  .deliver-to {
+    font-size: 11px !important;
+  }
+
+  .header-search {
+    order: 3;
+    width: 100%;
+    flex: 100%;
+    min-width: 0;
+    padding: 2px 0 0 0;
+  }
+
+  .search-box {
+    max-width: 100%;
+    height: 38px;
+    border-radius: 20px;
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1;
+    padding: 2px 14px;
+  }
+
+  .search-input {
+    font-size: 13px !important;
+  }
+
+  .header-right {
+    gap: 16px;
+  }
+
+  .action-icon {
+    font-size: 22px !important;
+  }
+
+  .action-text {
+    display: none !important;
+  }
+}

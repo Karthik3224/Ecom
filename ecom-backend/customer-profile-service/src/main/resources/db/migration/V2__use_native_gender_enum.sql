@@ -1,0 +1,2 @@
+ALTER TABLE customer_profiles
+  MODIFY COLUMN gender ENUM('FEMALE', 'MALE', 'OTHER', 'PREFER_NOT_TO_SAY') NULL;

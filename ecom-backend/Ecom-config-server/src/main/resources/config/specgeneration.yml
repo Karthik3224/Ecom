@@ -1,0 +1,28 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/metaarch_specgen?useSSL=false&serverTimezone=UTC
+    username: root
+    password: rootroot
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: false
+
+app:
+  jwt:
+    secret: "change-this-secret-to-a-long-random-string"
+    expiration-ms: 86400000
+    demo-user: "admin"
+    demo-roles: "ROLE_ADMIN"
+    print-token: true
+  auth:
+    bootstrap-enabled: true
+    bootstrap-user: "admin"
+    bootstrap-password: "admin123"
+    bootstrap-roles: "ROLE_ADMIN"

@@ -1,0 +1,78 @@
+.category-nav-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  background-color: #0B6E4F;
+  padding: 3px 20px 2px 20px;
+  gap: 28px;
+  overflow-x: auto;
+  white-space: nowrap;
+  border-bottom: none;
+}
+
+@media (max-width: 640px) {
+  .category-nav-container {
+    justify-content: flex-start;
+    padding: 3px 12px 2px 12px;
+    gap: 16px;
+  }
+}
+
+.category-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  color: #ffffff;
+  cursor: pointer;
+  position: relative;
+  padding-bottom: 3px;
+  transition: opacity 0.2s;
+  min-width: 50px;
+}
+
+.category-nav-item:hover {
+  opacity: 0.9;
+}
+
+.category-icon-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+}
+
+.category-icon-box svg {
+  font-size: 18px !important;
+  color: #ffffff;
+}
+
+.category-label {
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  color: #ffffff;
+  text-align: center;
+}
+
+.category-nav-item.active .category-label {
+  font-weight: 700 !important;
+}
+
+.active-indicator {
+  position: absolute;
+  bottom: 0;
+  width: 36px;
+  height: 3px;
+  background-color: #ffffff;
+  border-radius: 2px;
+}
+
+/* Hide scrollbar for category nav */
+.category-nav-container::-webkit-scrollbar {
+  display: none !important;
+}
+
+.category-nav-container {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

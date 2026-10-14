@@ -1,0 +1,75 @@
+spring:
+  application:
+    name: org-access
+
+  config:
+    import: "optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}"
+
+  datasource:
+    url: "jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DB:users_roles}?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
+    username: ${MYSQL_USERNAME:root}
+    password: ${MYSQL_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+
+  flyway:
+    enabled: ${FLYWAY_ENABLED:true}
+    baseline-on-migrate: ${FLYWAY_BASELINE_ON_MIGRATE:true}
+
+app:
+  jwt:
+    secret: "${JWT_SECRET:change-this-secret-to-a-long-random-string}"
+    expiration-millis: ${JWT_EXPIRATION_MILLIS:28800000}
+    issuer: org-access
+
+# Downstream services called by the delivery-partner operations endpoints.
+# Defaults assume every service runs on the host (native `mvn spring-boot:run`).
+# In Docker, override with the container hostnames (e.g. http://order-service:3311).
+services:
+  orders-url: "${ORDERS_SERVICE_URL:http://localhost:3311}"
+  fulfillment-url: "${FULFILLMENT_SERVICE_URL:http://localhost:3315}"
+  notifications-url: "${NOTIFICATIONS_SERVICE_URL:http://localhost:3317}"
+
+eureka:
+  client:
+    service-url:
+      defaultZone: "${EUREKA_SERVER_URL:http://localhost:8761/eureka}"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+# SMTP is disabled until a host and sender are supplied. No OTP is logged or returned.
+spring.mail.host: ${SMTP_HOST:}
+spring.mail.port: ${SMTP_PORT:587}
+spring.mail.username: ${SMTP_USERNAME:}
+spring.mail.password: ${SMTP_PASSWORD:}
+spring.mail.properties.mail.smtp.auth: ${SMTP_AUTH:true}
+spring.mail.properties.mail.smtp.starttls.enable: ${SMTP_STARTTLS:true}
+spring.mail.properties.mail.smtp.starttls.required: ${SMTP_STARTTLS:true}
+spring.mail.properties.mail.smtp.ssl.enable: ${SMTP_SSL:false}
+spring.mail.properties.mail.smtp.connectiontimeout: 5000
+spring.mail.properties.mail.smtp.timeout: 5000
+spring.mail.properties.mail.smtp.writetimeout: 5000
+app.otp.mail-from: ${SMTP_FROM:}
+app.otp.sms-url: ${SMS_OTP_URL:}
+app.otp.sms-token: ${SMS_OTP_TOKEN:}
+# Prevent framework request/response debug logging from recording authentication payloads.
+logging.level.org.springframework.web: WARN
+logging.level.org.springframework.jdbc: INFO
+logging.level.org.springframework.security: INFO

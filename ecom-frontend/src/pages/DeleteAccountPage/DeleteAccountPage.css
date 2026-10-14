@@ -1,0 +1,119 @@
+.delete-page-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #ffffff;
+  overflow: hidden;
+  font-family: 'Roboto', sans-serif;
+  position: relative;
+}
+
+.delete-page-header {
+  height: 56px;
+  background-color: #075F40;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  color: #ffffff;
+  z-index: 10;
+}
+
+.delete-header-title {
+  font-weight: 700 !important;
+  font-size: 1.05rem !important;
+  color: #ffffff !important;
+}
+
+.delete-page-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 20px 100px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.delete-question-title {
+  font-size: 0.92rem !important;
+  font-weight: 800 !important;
+  color: #075F40 !important;
+}
+
+.delete-warning-text {
+  font-size: 0.78rem !important;
+  color: #475569;
+  line-height: 1.5 !important;
+}
+
+.delete-form-step {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.otp-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.field-heading-label {
+  font-size: 0.9rem !important;
+  font-weight: 800 !important;
+  color: #1e293b;
+}
+
+.resend-otp-link {
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  color: #075F40 !important;
+  cursor: pointer;
+}
+
+.delete-input-underline {
+  border-bottom: 1px solid #cbd5e1 !important;
+  padding: 6px 0 !important;
+  font-size: 0.88rem !important;
+  color: #1e293b !important;
+}
+
+.field-hint-text {
+  font-size: 0.72rem !important;
+  color: #64748b;
+  line-height: 1.4 !important;
+  margin-top: 6px !important;
+}
+
+.delete-page-footer {
+  position: absolute;
+  bottom: 60px;
+  left: 0;
+  right: 0;
+  padding: 16px 20px;
+  background-color: #ffffff;
+  z-index: 10;
+}
+
+.continue-gray-btn {
+  background-color: #cbd5e1 !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  text-transform: none !important;
+  padding: 12px !important;
+  border-radius: 12px !important;
+  font-size: 1rem !important;
+  box-shadow: none !important;
+}
+
+.delete-red-btn {
+  background-color: #dc2626 !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  text-transform: none !important;
+  padding: 12px !important;
+  border-radius: 12px !important;
+  font-size: 1rem !important;
+  box-shadow: none !important;
+}

@@ -1,0 +1,28 @@
+spring:
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:cart-operations.sql
+  autoconfigure:
+    exclude: com.metaarch.sync.SyncAutoConfiguration
+  config:
+    import: ""
+  cloud:
+    config:
+      enabled: false
+  datasource:
+    url: jdbc:h2:mem:cart;MODE=MySQL;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+  flyway:
+    enabled: false
+eureka:
+  client:
+    enabled: false
+app:
+  jwt:
+    secret: cart-test-only-secret-012345678901234567890123456789012345678901234
+    issuer: org-access

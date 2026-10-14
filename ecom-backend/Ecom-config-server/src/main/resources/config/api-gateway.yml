@@ -1,0 +1,131 @@
+server:
+  port: 8082
+
+spring:
+  cloud:
+    gateway:
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_FIRST
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - PATCH
+              - OPTIONS
+            allowedHeaders: "*"
+            exposedHeaders:
+              - Authorization
+              - Location
+              - Content-Disposition
+            allowCredentials: true
+            maxAge: 3600
+      routes:
+        - id: customer-profile-service
+          uri: lb://customer-profile-service
+          predicates:
+            - Path=/customer-profile/**
+          filters:
+            - StripPrefix=1
+        - id: bug-management
+          uri: lb://bug-management
+          predicates:
+            - Path=/bug-management/**
+          filters:
+            - StripPrefix=1
+
+        - id: cine-project
+          uri: lb://cine-project
+          predicates:
+            - Path=/cine-project/**
+          filters:
+            - StripPrefix=1
+
+        - id: specgeneration
+          uri: lb://specgeneration
+          predicates:
+            - Path=/specgeneration/**
+          filters:
+            - StripPrefix=1
+        - id: timesheet-resource
+          uri: lb://timesheet-resource
+          predicates:
+            - Path=/timesheet/**
+          filters:
+            - StripPrefix=1
+        - id: org-access
+          uri: lb://org-access
+          predicates:
+            - Path=/org-access/**
+          filters:
+            - StripPrefix=1
+        - id: employee1
+          uri: lb://employee1
+          predicates:
+            - Path=/employee1/**
+          filters:
+            - StripPrefix=1
+        - id: leavemanagement
+          uri: lb://leavemanagement
+          predicates:
+            - Path=/leavemanagement/**
+          filters:
+            - StripPrefix=1
+        - id: booking-system
+          uri: lb://booking-system
+          predicates:
+            - Path=/booking-system/**
+          filters:
+            - StripPrefix=1
+        - id: alerts-service
+          uri: lb://alerts-service
+          predicates:
+            - Path=/alerts-service/**
+          filters:
+            - StripPrefix=1
+        - id: inventory-service
+          uri: lb://inventory-service
+          predicates:
+            - Path=/inventory-service/**
+          filters:
+            - StripPrefix=1
+        - id: payment-service
+          uri: lb://payment-service
+          predicates:
+            - Path=/payment-service/**
+          filters:
+            - StripPrefix=1
+        - id: fulfillment-service
+          uri: lb://fulfillment-service
+          predicates:
+            - Path=/fulfillment-service/**
+          filters:
+            - StripPrefix=1
+        - id: notification-service
+          uri: lb://notification-service
+          predicates:
+            - Path=/notification-service/**
+          filters:
+            - StripPrefix=1
+        - id: theatre-management-service
+          uri: lb://theatre-management-service
+          predicates:
+            - Path=/theatre-management-service/**
+          filters:
+            - StripPrefix=1
+        - id: vendor
+          uri: lb://vendor
+          predicates:
+            - Path=/vendor/**
+          filters:
+            - StripPrefix=1
+
+eureka:
+  client:
+    service-url:
+      defaultZone: "${EUREKA_SERVER_URL:http://localhost:8761/eureka}"

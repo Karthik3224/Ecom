@@ -1,0 +1,53 @@
+import { createRequire } from 'node:module';
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+const { chromium }=createRequire(process.env.PLAYWRIGHT_MODULE+'/package.json')('playwright');
+const base='http://127.0.0.1:5184';
+const bytes=fs.readFileSync('.local/isolated-login-fixture.json');
+const fixture=JSON.parse(bytes.toString(bytes[0]===255?'utf16le':'utf8').replace(/^\uFEFF/,''));
+const saved=JSON.parse(fs.readFileSync('.local/delivery-browser-20261012/browser.json','utf8'));
+assert.equal(saved[0].owner,fixture.customerId);
+const id=saved[0].group.children[0].orderId;
+const postLogin=async (username,password,customer=false)=>{
+  const r=await fetch(base+'/org-access/api/auth/'+(customer?'customer/login':'login'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(customer?{email:username,password}:{username,password})});
+  assert.equal(r.status,200);return r.json();
+};
+const deadline=Date.now()+300000;
+for(const port of [3310,3315])while(true){try{const r=await fetch(`http://127.0.0.1:${port}/actuator/health`);if(r.ok&&(await r.json()).status==='UP')break;}catch{/* Local reload. */}assert.ok(Date.now()<deadline);await new Promise(resolve=>setTimeout(resolve,1000));}
+const manager=await postLogin('storemanagerhydmain','admin123');
+const assigned=await fetch(base+'/org-access/api/delivery/orders/'+id+'/partner/76',{method:'PUT',headers:{Authorization:'Bearer '+manager.token}});
+assert.equal(assigned.status,200,await assigned.text());
+const customer=await postLogin(fixture.email,'LocalQaOnly9',true);
+const browser=await chromium.launch({channel:'msedge',headless:true});
+try {
+  const customerPage=await browser.newPage();
+  await customerPage.addInitScript(({user,token})=>{if(location.origin!=='http://127.0.0.1:5184')return;sessionStorage.setItem('user',JSON.stringify(user));sessionStorage.setItem('authToken',token);sessionStorage.setItem('isLoggedIn','true');},customer);
+  await customerPage.goto(base+'/order-details/'+id,{waitUntil:'domcontentloaded'});
+  await customerPage.getByRole('heading',{name:'Order status',exact:true}).waitFor();
+  const partner=await browser.newPage();
+  await partner.goto(base+'/login',{waitUntil:'domcontentloaded'});
+  await partner.getByRole('textbox',{name:'Email, Mobile Number or Username'}).fill('deliverypartnerhydmain01');
+  await partner.locator('input[type=password]').fill('admin123');
+  await partner.getByRole('button',{name:'Sign in',exact:true}).click();
+  await partner.waitForURL('**/delivery');
+  await partner.goto(base+'/delivery/orders',{waitUntil:'domcontentloaded'});
+  const token=await partner.evaluate(()=>sessionStorage.getItem('authToken'));
+  const order=await (await partner.request.get(base+'/order-api/api/v1/orders/'+id,{headers:{Authorization:'Bearer '+token}})).json();
+  const card=partner.locator('.delivery-order-card').filter({hasText:order.orderNumber||id});
+  await card.waitFor({timeout:60000});
+  const accept=card.getByRole('button',{name:'Accept Assignment',exact:true});
+  if(await accept.count())await accept.click();
+  await customerPage.getByText('Delivery partner accepted',{exact:true}).waitFor({timeout:45000});
+  const replay=await partner.request.post(base+'/org-access/api/delivery/me/orders/'+id+'/actions',{headers:{Authorization:'Bearer '+token},data:{action:'ACCEPT'}});
+  assert.equal(replay.status(),200);
+  const mysql='C:/Program Files/MySQL/MySQL Server 8.0/bin/mysql.exe';
+  const sql=q=>execFileSync(mysql,['--no-defaults','--host=127.0.0.1','--port=14306','--user=root','--batch','--skip-column-names','--execute='+q],{encoding:'utf8'}).trim();
+  assert.equal(sql('SELECT @@server_uuid'),'580d1315-c4bf-11f1-bf4b-14cb19888cfa');
+  assert.match(id,/^[a-f0-9-]{36}$/i);
+  assert.equal(sql(`SELECT COUNT(*) FROM qual_99b106e3_fulfillment.tracking_events e JOIN qual_99b106e3_fulfillment.shipments s ON s.id=e.shipment_id WHERE s.order_id=UUID_TO_BIN('${id}') AND e.description='Assignment accepted by delivery partner.' AND e.event_time>=s.delivery_assigned_at`),'1');
+  const wrong=await postLogin('deliverypartnersrnagar01','admin123');
+  const denied=await partner.request.post(base+'/org-access/api/delivery/me/orders/'+id+'/actions',{headers:{Authorization:'Bearer '+wrong.token},data:{action:'ACCEPT'}});
+  assert.equal(denied.status(),403);
+  console.log('PASS real partner Accept button, customer polling, one saved acceptance on retry, foreign-partner denial');
+}finally{await browser.close();}

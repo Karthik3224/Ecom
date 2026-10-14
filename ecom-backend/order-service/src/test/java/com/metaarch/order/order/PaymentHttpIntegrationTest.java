@@ -1,0 +1,260 @@
+package com.metaarch.order.order;
+
+import com.metaarch.order.event.*;
+import com.metaarch.sync.SyncAuthentication;
+import com.metaarch.sync.SyncEnvelope;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.math.BigDecimal;
+import java.time.*;
+import java.util.UUID;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.*;
+import org.springframework.jdbc.core.JdbcTemplate;
+import static org.assertj.core.api.Assertions.*;
+
+@SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT, properties={
+  "spring.cloud.config.enabled=false", "eureka.client.enabled=false",
+  "spring.datasource.url=jdbc:h2:mem:order_sync_test;MODE=MySQL;DB_CLOSE_DELAY=-1",
+  "spring.datasource.driver-class-name=org.h2.Driver", "spring.datasource.username=sa", "spring.datasource.password=",
+  "spring.jpa.database-platform=org.hibernate.dialect.H2Dialect", "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect",
+  "spring.jpa.hibernate.ddl-auto=create-drop", "spring.flyway.enabled=false",
+  "spring.sql.init.mode=always", "spring.sql.init.schema-locations=classpath:sync-schema.sql",
+  "sync.dispatch-enabled=false", "sync.keys.payment-service=test-payment-key-at-least-32-characters",
+  "sync.service=order-service", "sync.routes.order=payment-service,fulfillment-service,notification-service",
+  "sync.targets.payment-service=http://127.0.0.1:1", "sync.targets.fulfillment-service=http://127.0.0.1:1", "sync.targets.notification-service=http://127.0.0.1:1"
+})
+class PaymentHttpIntegrationTest {
+  @org.springframework.boot.test.mock.mockito.MockBean org.springframework.security.oauth2.jwt.JwtDecoder decoder;
+  @Autowired OrderRepository orders;
+  @Autowired TestRestTemplate http;
+  @Autowired ObjectMapper mapper;
+  @Autowired SyncAuthentication authentication;
+  @Autowired JdbcTemplate jdbc;
+  @Autowired OrderCreation creation;
+  @Autowired OrderService service;
+  @org.springframework.boot.test.mock.mockito.MockBean CatalogDeliveryQuoteClient catalog;
+  @org.springframework.boot.test.mock.mockito.MockBean CheckoutCartClient cart;
+
+  @org.junit.jupiter.api.BeforeEach void prepareCreationSchema() {
+    org.mockito.Mockito.reset(decoder);
+    org.mockito.Mockito.when(decoder.decode(org.mockito.ArgumentMatchers.anyString())).thenAnswer(call ->
+      org.springframework.security.oauth2.jwt.Jwt.withTokenValue(call.getArgument(0)).header("alg", "HS256")
+        .subject("test-owner").claim("customerId", call.getArgument(0).toString())
+        .claim("accountType", "admin".equals(call.getArgument(0)) ? "staff" : "customer")
+        .claim("roles", java.util.List.of("admin".equals(call.getArgument(0)) ? "ROLE_ADMIN" : "ROLE_CUSTOMER")).build());
+    for (String store : java.util.List.of("test-store", "other-store")) {
+      org.mockito.Mockito.when(decoder.decode("manager-" + store)).thenReturn(
+        org.springframework.security.oauth2.jwt.Jwt.withTokenValue("manager-" + store).header("alg", "HS512")
+          .subject("test-manager").claim("accountType", "staff")
+          .claim("authorities", java.util.List.of("ROLE_STORE_MANAGER", "SCOPE_STORE:" + store)).build());
+    }
+    jdbc.execute("CREATE TABLE IF NOT EXISTS order_creation_requests(customer_id VARCHAR(36),request_key VARCHAR(128),request_hash VARCHAR(64),order_id VARCHAR(36) UNIQUE,PRIMARY KEY(customer_id,request_key))");
+    jdbc.update("DELETE FROM order_creation_requests");
+    jdbc.update("DELETE FROM sync_inbox");
+    jdbc.update("DELETE FROM sync_outbox");
+    org.mockito.Mockito.reset(catalog);
+    org.mockito.Mockito.reset(cart);
+    org.mockito.Mockito.when(catalog.verifyItem(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyBoolean(), org.mockito.ArgumentMatchers.anyBoolean()))
+      .thenAnswer(call -> call.getArgument(1));
+  }
+
+  private CreateOrderRequest pickupRequest() throws Exception {
+    return mapper.readValue("""
+      {"customerId":"%s","cartId":"%s","storeId":"test-store",
+       "items":[{"productId":"%s","productName":"Test product","quantity":1,"unitPrice":10}],
+       "deliveryMethod":"pickup","fulfillmentType":"pickup"}
+      """.formatted(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID()), CreateOrderRequest.class);
+  }
+  @Test void managerStatusPersistsAndCustomerReadsItWhileOtherStoreIsDenied() throws Exception {
+    var payload = pickupRequest();
+    var order = creation.create(UUID.randomUUID().toString(), payload);
+    var headers = new HttpHeaders(); headers.setContentType(MediaType.APPLICATION_JSON);
+    headers.setBearerAuth("manager-other-store");
+    String path = "/api/v1/orders/" + order.id();
+    assertThat(http.exchange(path, HttpMethod.GET, new HttpEntity<>(headers), String.class).getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    assertThat(http.exchange(path + "/status", HttpMethod.PATCH, new HttpEntity<>("{\"status\":\"CONFIRMED\"}", headers), String.class).getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    headers.setBearerAuth("manager-test-store");
+    assertThat(http.exchange("/api/v1/orders?storeId=test-store", HttpMethod.GET, new HttpEntity<>(headers), String.class).getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(http.exchange("/api/v1/orders", HttpMethod.GET, new HttpEntity<>(headers), String.class).getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    assertThat(http.exchange(path + "/status", HttpMethod.PATCH, new HttpEntity<>("{\"status\":\"CONFIRMED\"}", headers), String.class).getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(orders.findById(order.id()).orElseThrow().getStatus()).isEqualTo(OrderStatus.CONFIRMED);
+    headers.setBearerAuth(payload.customerId().toString());
+    assertThat(http.exchange(path, HttpMethod.GET, new HttpEntity<>(headers), OrderResponse.class).getBody().status()).isEqualTo(OrderStatus.CONFIRMED);
+  }
+
+  @Test void repeatedHttpCreationReturnsSameOrderAndRejectsChangedPayload() throws Exception {
+    var payload = pickupRequest();
+    var headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    headers.set("Idempotency-Key", UUID.randomUUID().toString());
+    var body = mapper.writeValueAsString(payload);
+    headers.setBearerAuth(payload.customerId().toString());
+    var first = http.postForEntity("/api/v1/orders", new HttpEntity<>(body, headers), OrderResponse.class);
+    var retry = http.postForEntity("/api/v1/orders", new HttpEntity<>(body, headers), OrderResponse.class);
+    assertThat(first.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+    assertThat(retry.getBody().id()).isEqualTo(first.getBody().id());
+    assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM order_creation_requests", Integer.class)).isEqualTo(1);
+    assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM sync_outbox", Integer.class)).isEqualTo(3);
+    assertThat(http.postForEntity("/api/v1/orders", new HttpEntity<>(body.replace("test-store", "another-store"), headers), String.class).getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+    headers.remove("Idempotency-Key");
+    assertThat(http.postForEntity("/api/v1/orders", new HttpEntity<>(body, headers), String.class).getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+  }
+
+  @Test void concurrentCreationReusesCommittedOrder() throws Exception {
+    var payload = pickupRequest();
+    String key = UUID.randomUUID().toString();
+    try (var executor = java.util.concurrent.Executors.newFixedThreadPool(2)) {
+      var first = executor.submit(() -> creation.create(key, payload));
+      var second = executor.submit(() -> creation.create(key, payload));
+      assertThat(second.get().id()).isEqualTo(first.get().id());
+      assertThat(creation.create(key, payload).id()).isEqualTo(first.get().id());
+    }
+    assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM order_creation_requests", Integer.class)).isEqualTo(1);
+    assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM sync_outbox", Integer.class)).isEqualTo(3);
+  }
+
+  @Test void differentRetryKeysForSameCartDoNotCreateAnotherOrder() throws Exception {
+    var payload=pickupRequest();
+    var first=creation.create(UUID.randomUUID().toString(),payload);
+    var second=creation.create(UUID.randomUUID().toString(),payload);
+    assertThat(second.id()).isEqualTo(first.id());
+    assertThat(orders.findByCartId(payload.cartId())).hasSize(1);
+    assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM sync_outbox",Integer.class)).isEqualTo(3);
+  }
+
+  @Test void deniedCartClaimCreatesNoOrderRequestOrDownstreamEvent() throws Exception {
+    var payload=pickupRequest(); long before=orders.count();
+    org.mockito.Mockito.doThrow(new org.springframework.security.access.AccessDeniedException("Cart owned by another customer"))
+      .when(cart).claim(org.mockito.ArgumentMatchers.any(),org.mockito.ArgumentMatchers.anyString());
+    var headers=new HttpHeaders();headers.setBearerAuth(payload.customerId().toString());headers.setContentType(MediaType.APPLICATION_JSON);
+    headers.set("Idempotency-Key",UUID.randomUUID().toString());
+    assertThat(http.postForEntity("/api/v1/orders",new HttpEntity<>(mapper.writeValueAsString(payload),headers),String.class).getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    assertThat(orders.count()).isEqualTo(before);
+    assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM order_creation_requests",Integer.class)).isZero();
+    assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM sync_outbox",Integer.class)).isZero();
+    org.mockito.Mockito.verifyNoInteractions(catalog);
+  }
+
+  @Test void missingAuthenticationAndForgedCustomerFailBeforeCartOrOrderWrites() throws Exception {
+    var payload=pickupRequest();long before=orders.count();var headers=new HttpHeaders();headers.setContentType(MediaType.APPLICATION_JSON);
+    headers.set("Idempotency-Key",UUID.randomUUID().toString());String body=mapper.writeValueAsString(payload);
+    assertThat(http.postForEntity("/api/v1/orders",new HttpEntity<>(body,headers),String.class).getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    headers.setBearerAuth(UUID.randomUUID().toString());
+    assertThat(http.postForEntity("/api/v1/orders",new HttpEntity<>(body,headers),String.class).getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    assertThat(orders.count()).isEqualTo(before);org.mockito.Mockito.verifyNoInteractions(cart,catalog);
+    assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM sync_outbox",Integer.class)).isZero();
+  }
+
+  @Test void catalogFailureRollsBackRequestAndCanRetrySameKey() throws Exception {
+    var payload = pickupRequest();
+    String key = UUID.randomUUID().toString();
+    org.mockito.Mockito.when(catalog.verifyItem(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyBoolean(), org.mockito.ArgumentMatchers.anyBoolean()))
+      .thenThrow(new IllegalArgumentException("catalog unavailable"));
+    assertThatThrownBy(() -> creation.create(key, payload)).isInstanceOf(IllegalArgumentException.class);
+    assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM order_creation_requests", Integer.class)).isZero();
+    assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM sync_outbox", Integer.class)).isZero();
+    org.mockito.Mockito.doAnswer(call -> call.getArgument(1)).when(catalog).verifyItem(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyBoolean(), org.mockito.ArgumentMatchers.anyBoolean());
+    assertThat(creation.create(key, payload).id()).isNotNull();
+  }
+
+  @Test void missingCreationSchemaFailsBeforeOrderOrOutboxWrites() throws Exception {
+    var payload = pickupRequest();
+    long before = orders.count();
+    jdbc.execute("DROP TABLE order_creation_requests");
+    try {
+      assertThatThrownBy(() -> creation.create(UUID.randomUUID().toString(), payload))
+          .isInstanceOf(org.springframework.dao.DataAccessException.class);
+      assertThat(orders.count()).isEqualTo(before);
+      assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM sync_outbox", Integer.class)).isZero();
+    } finally { prepareCreationSchema(); }
+  }
+
+  @Test void concurrentIdenticalStatusTransitionsEmitOneEvent() throws Exception {
+    Order order = orders.save(new Order(UUID.randomUUID(), UUID.randomUUID(), "store", "ORD-CONCURRENT-STATUS"));
+    var update = new UpdateOrderStatusRequest(OrderStatus.CONFIRMED);
+    try (var executor = java.util.concurrent.Executors.newFixedThreadPool(2)) {
+      var first = executor.submit(() -> service.updateStatus(order.getId(), update));
+      var second = executor.submit(() -> service.updateStatus(order.getId(), update));
+      assertThat(first.get().status()).isEqualTo(OrderStatus.CONFIRMED);
+      assertThat(second.get().status()).isEqualTo(OrderStatus.CONFIRMED);
+    }
+    assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM sync_outbox", Integer.class)).isEqualTo(3);
+  }
+
+  @Test void authenticatedDuplicatePaymentUpdatesOrderAndOutboxOnce() throws Exception {
+    Order order = orders.save(new Order(UUID.randomUUID(), UUID.randomUUID(), "store-1", "ORD-HTTP"));
+    order.setTotalAmount(new BigDecimal("40.00"));
+    orders.save(order);
+    UUID eventId = UUID.randomUUID();
+    var event = new PaymentEvent(eventId, PaymentEventType.PAYMENT_SUCCESS, UUID.randomUUID(), order.getId(),
+      order.getCustomerId(), "provider-reference", new BigDecimal("40.00"), "INR", PaymentEventStatus.SUCCESS, Instant.now());
+    byte[] body = mapper.writeValueAsBytes(new SyncEnvelope(eventId, "payment-service", "payment", order.getId().toString(), mapper.valueToTree(event)));
+    var headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    headers.set("X-Sync-Source", "payment-service");
+    String timestamp = Long.toString(Instant.now().getEpochSecond());
+    headers.set("X-Sync-Time", timestamp);
+    headers.set("X-Sync-Signature", authentication.sign("payment-service", timestamp, body));
+    var request = new HttpEntity<>(body, headers);
+    assertThat(http.postForEntity("/internal/events", request, String.class).getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+    assertThat(http.postForEntity("/internal/events", request, String.class).getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+    assertThat(orders.findById(order.getId()).orElseThrow().getPaymentStatus()).isEqualTo(PaymentStatus.SUCCESS);
+    assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM sync_inbox", Integer.class)).isEqualTo(1);
+    assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM sync_outbox", Integer.class)).isEqualTo(3);
+  }
+
+  @Test void missingInternalAuthenticationIsRejected() {
+    var headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    assertThat(http.postForEntity("/internal/events", new HttpEntity<>("{}", headers), String.class).getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+  }
+
+  @Test void rejectedJwtAndCancellationAreSafe() {
+    UUID customer = UUID.randomUUID();
+    var order = orders.save(new Order(customer, UUID.randomUUID(), "store", "ORD-CANCEL-" + UUID.randomUUID().toString().substring(0, 20)));
+    String path = "/api/v1/orders/" + order.getId();
+    var headers = new HttpHeaders();
+    for (String token : java.util.List.of("invalid", "expired")) {
+      org.mockito.Mockito.when(decoder.decode(token)).thenThrow(new org.springframework.security.oauth2.jwt.BadJwtException("Rejected token"));
+      headers.setBearerAuth(token);
+      assertThat(http.exchange(path, HttpMethod.GET, new HttpEntity<>(headers), String.class).getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+      assertThat(http.postForEntity(path + "/cancel", new HttpEntity<>(headers), String.class).getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+    headers.setBearerAuth(UUID.randomUUID().toString());
+    assertThat(http.postForEntity(path + "/cancel", new HttpEntity<>(headers), String.class).getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    assertThat(orders.findById(order.getId()).orElseThrow().getStatus()).isEqualTo(OrderStatus.CREATED);
+    headers.setBearerAuth(customer.toString());
+    assertThat(http.postForEntity(path + "/cancel", new HttpEntity<>(headers), OrderResponse.class).getBody().status()).isEqualTo(OrderStatus.CANCELLED);
+    int events = jdbc.queryForObject("SELECT COUNT(*) FROM sync_outbox", Integer.class);
+    assertThat(http.postForEntity(path + "/cancel", new HttpEntity<>(headers), OrderResponse.class).getBody().status()).isEqualTo(OrderStatus.CANCELLED);
+    assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM sync_outbox", Integer.class)).isEqualTo(events);
+  }
+
+  @Test void ownerIsolationAndPublicStatusProtection() {
+    UUID customer = UUID.randomUUID();
+    var order = orders.save(new Order(customer, UUID.randomUUID(), "store", "ORD-OWNERSHIP"));
+    String path = "/api/v1/orders/" + order.getId();
+    assertThat(http.getForEntity(path, String.class).getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    var headers = new HttpHeaders();
+    headers.setBearerAuth(customer.toString());
+    assertThat(http.exchange(path, HttpMethod.GET, new HttpEntity<>(headers), String.class).getStatusCode()).isEqualTo(HttpStatus.OK);
+    headers.setBearerAuth(UUID.randomUUID().toString());
+    assertThat(http.exchange(path, HttpMethod.GET, new HttpEntity<>(headers), String.class).getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    assertThat(http.exchange(path + "/items", HttpMethod.GET, new HttpEntity<>(headers), String.class).getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    assertThat(http.exchange("/api/v1/orders/customer/" + customer + "/history", HttpMethod.GET,
+      new HttpEntity<>(headers), String.class).getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    headers.setBearerAuth(customer.toString());
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    assertThat(http.exchange(path + "/status", HttpMethod.PATCH, new HttpEntity<>("{\"status\":\"CONFIRMED\"}", headers), String.class).getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    assertThat(http.exchange(path + "/payment-status", HttpMethod.PATCH, new HttpEntity<>("{\"paymentStatus\":\"SUCCESS\"}", headers), String.class).getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    assertThat(http.exchange("/api/v1/orders", HttpMethod.GET, new HttpEntity<>(headers), String.class).getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    headers.setBearerAuth("admin");
+    assertThat(http.exchange(path, HttpMethod.GET, new HttpEntity<>(headers), String.class).getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(http.exchange("/api/v1/orders", HttpMethod.GET, new HttpEntity<>(headers), String.class).getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(http.exchange(path + "/status", HttpMethod.PATCH, new HttpEntity<>("{\"status\":\"CONFIRMED\"}", headers), String.class).getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(http.exchange(path + "/payment-status", HttpMethod.PATCH, new HttpEntity<>("{\"paymentStatus\":\"SUCCESS\"}", headers), String.class).getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+  }
+}

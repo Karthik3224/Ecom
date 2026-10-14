@@ -1,0 +1,10 @@
+package com.metaarch.fulfillment.event;
+
+public enum FulfillmentEventType {
+  FULFILLMENT_CREATED,
+  FULFILLMENT_STATUS_UPDATED,
+  SHIPMENT_CREATED,
+  SHIPMENT_STATUS_UPDATED,
+  SHIPMENT_DELIVERED,
+  TRACKING_EVENT_ADDED
+}

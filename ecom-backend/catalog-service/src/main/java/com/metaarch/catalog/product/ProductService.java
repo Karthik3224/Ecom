@@ -1,0 +1,20 @@
+package com.metaarch.catalog.product;
+import java.util.UUID; import com.metaarch.catalog.category.CategoryService; import com.metaarch.catalog.common.PageResponse; import com.metaarch.catalog.exception.*; import com.metaarch.catalog.image.ProductImageRepository; import com.metaarch.catalog.storeproduct.StoreProductRepository; import com.metaarch.catalog.variant.ProductVariantRepository; import org.springframework.data.domain.*; import org.springframework.stereotype.Service; import org.springframework.transaction.annotation.Transactional;
+@Service public class ProductService {
+ private final ProductRepository products; private final CategoryService categories; private final ProductVariantRepository variants; private final ProductImageRepository images; private final StoreProductRepository storeProducts;
+ public ProductService(ProductRepository p,CategoryService c,ProductVariantRepository v,ProductImageRepository i,StoreProductRepository s){products=p;categories=c;variants=v;images=i;storeProducts=s;}
+ @Transactional public ProductResponse create(ProductRequest r){unique(r.slug(),r.sku(),null);Product p=new Product(categories.find(r.categoryId()),clean(r.name()),clean(r.slug()),clean(r.sku()));apply(p,r);return ProductResponse.from(products.save(p));}
+ @Transactional(readOnly=true) public ProductResponse get(UUID id){return ProductResponse.from(find(id));}
+ @Transactional(readOnly=true) public PageResponse<ProductResponse> list(UUID categoryId,ProductStatus status,String search,Boolean globalProduct,Pageable pageable){String term=search==null||search.isBlank()?null:search.trim();return PageResponse.from(products.search(categoryId,status,term,globalProduct,pageable),ProductResponse::from);}
+ @Transactional public ProductResponse update(UUID id,ProductRequest r){Product p=find(id);unique(r.slug(),r.sku(),id);p.setCategory(categories.find(r.categoryId()));p.setSlug(clean(r.slug()));p.setSku(clean(r.sku()));apply(p,r);return ProductResponse.from(p);}
+ @Transactional public void delete(UUID id){Product p=find(id);storeProducts.deleteByProductId(id);images.deleteByProductId(id);variants.deleteByProductId(id);products.delete(p);}
+ public Product find(UUID id){return products.findById(id).orElseThrow(()->new ResourceNotFoundException("Product not found: "+id));}
+ private void apply(Product p,ProductRequest r){p.setName(clean(r.name()));p.setSubcategory(blankOrDefault(r.subcategory(),"Other"));p.setDescription(blank(r.description()));p.setBrand(blank(r.brand()));p.setIngredients(blank(r.ingredients()));p.setSpecifications(blank(r.specifications()));p.setPack(blank(r.pack()));p.setType(blank(r.type()));p.setShelfLife(blank(r.shelfLife()));p.setTags(blank(r.tags()));p.setHighlights(blank(r.highlights()));p.setAboutSource(blank(r.aboutSource()));p.setStatus(r.status());p.setFeatured(Boolean.TRUE.equals(r.featured()));p.setSpecial(Boolean.TRUE.equals(r.special()));p.setNewArrival(Boolean.TRUE.equals(r.newArrival()));p.setBestSeller(Boolean.TRUE.equals(r.bestSeller()));p.setGlobalProduct(Boolean.TRUE.equals(r.globalProduct()));p.setFulfillmentType(Boolean.TRUE.equals(r.globalProduct())?blankOrDefault(r.fulfillmentType(),"global"):blank(r.fulfillmentType()));p.setDeliveryMethod(Boolean.TRUE.equals(r.globalProduct())?blankOrDefault(r.deliveryMethod(),"global"):blank(r.deliveryMethod()));}
+ private void unique(String slug,String sku,UUID id){
+  boolean ds=id==null?products.existsBySlugIgnoreCase(clean(slug)):products.existsBySlugIgnoreCaseAndIdNot(clean(slug),id);
+  boolean dk=id==null?products.existsBySkuIgnoreCase(clean(sku)):products.existsBySkuIgnoreCaseAndIdNot(clean(sku),id);
+  if(ds) throw new ConflictException("Product slug already exists");
+  if(dk) throw new ConflictException("Product SKU already exists");
+ }
+ private String clean(String v){return v.trim();} private String blank(String v){return v==null||v.isBlank()?null:v.trim();} private String blankOrDefault(String v,String fallback){String clean=blank(v);return clean==null?fallback:clean;}
+}

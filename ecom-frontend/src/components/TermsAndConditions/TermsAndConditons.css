@@ -1,0 +1,20 @@
+.footer-wrapper {
+  margin-top: 16px;
+}
+
+.footer-wrapper .footer-agreement-text {
+  font-size: 10px !important;
+  text-align: center;
+  color: #666;
+  line-height: 1.5;
+}
+
+.footer-wrapper .policy-link {
+  color: #0B6E4F !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+}
+
+.footer-wrapper .policy-link:hover {
+  text-decoration: underline !important;
+}

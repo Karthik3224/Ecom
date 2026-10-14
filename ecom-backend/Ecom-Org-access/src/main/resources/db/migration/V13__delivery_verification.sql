@@ -1,0 +1,6 @@
+CREATE TABLE delivery_verifications (
+ order_id VARCHAR(36) PRIMARY KEY, partner_id BIGINT NOT NULL, code_hash VARCHAR(255) NOT NULL,
+ issued_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, expires_at TIMESTAMP NOT NULL,
+ attempts INT NOT NULL DEFAULT 0, consumed BOOLEAN NOT NULL DEFAULT FALSE,
+ FOREIGN KEY (partner_id) REFERENCES app_users(id)
+);

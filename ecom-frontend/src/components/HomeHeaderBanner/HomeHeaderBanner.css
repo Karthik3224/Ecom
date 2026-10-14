@@ -1,0 +1,227 @@
+.combined-green-banner-wrapper {
+  background: linear-gradient(180deg, #074D35 0%, #053D2A 100%);
+  padding: 16px 4vw 24px 4vw;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Top Header Row */
+.banner-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+
+.banner-brand-left {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.banner-brand-logo {
+  height: 52px;
+  max-width: 140px;
+  object-fit: contain;
+  cursor: pointer;
+  filter: brightness(0) invert(1);
+}
+
+.user-greeting-location {
+  display: flex;
+  flex-direction: column;
+}
+
+.banner-user-name {
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+}
+
+.banner-location-selector {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+}
+
+.banner-location-text {
+  font-size: 0.75rem !important;
+  color: #cbd5e1 !important;
+  white-space: nowrap;
+}
+
+/* Search Bar */
+.banner-search-bar {
+  flex: 1;
+  max-width: 460px;
+  background-color: #ffffff !important;
+  border-radius: 8px;
+  padding: 6px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid #cbd5e1;
+}
+
+.banner-search-input {
+  width: 100%;
+  font-size: 0.85rem !important;
+  color: #1e293b !important;
+}
+
+/* Header Right Actions */
+.banner-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.banner-action-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  color: #ffffff;
+}
+
+.banner-action-label {
+  font-size: 0.7rem !important;
+  color: #e2e8f0 !important;
+  margin-top: 2px !important;
+}
+
+/* Category Navigation */
+.banner-category-nav {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  gap: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: none;
+}
+
+.banner-category-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  position: relative;
+  padding: 1px 4px;
+  color: #e2e8f0;
+}
+
+.category-icon-circle {
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+}
+
+.category-name-text {
+  font-size: 0.76rem !important;
+  font-weight: 500 !important;
+  color: #ffffff !important;
+}
+
+.banner-category-item.active .category-name-text {
+  font-weight: 700 !important;
+}
+
+.category-active-line {
+  position: absolute;
+  bottom: -9px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background-color: #ffffff;
+  border-radius: 2px;
+}
+
+/* Hero Section */
+.banner-hero-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  margin-top: -4px;
+}
+
+.hero-text-side {
+  flex: 1;
+}
+
+.hero-main-title {
+  font-size: 1.3rem !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+  color: #ffffff !important;
+  font-family: serif !important;
+}
+
+.hero-sub-text {
+  font-size: 0.85rem !important;
+  color: #e2e8f0 !important;
+  margin-top: 6px !important;
+}
+
+.hero-image-side {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.hero-jar-img {
+  height: 140px;
+  object-fit: contain;
+  filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.4));
+}
+
+.trusted-badge-seal {
+  position: absolute;
+  right: -50px;
+  top: 10px;
+  width: 90px;
+  height: 105px;
+  background: radial-gradient(circle, #78350f 0%, #451a03 100%);
+  border: 2px solid #fbbf24;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  text-align: center;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+.trusted-word {
+  font-size: 0.55rem !important;
+  color: #fbbf24 !important;
+  font-weight: 700 !important;
+}
+
+.trusted-number {
+  font-size: 1.4rem !important;
+  font-weight: 900 !important;
+  color: #ffffff !important;
+  line-height: 1 !important;
+}
+
+.trusted-thousand {
+  font-size: 0.55rem !important;
+  color: #fbbf24 !important;
+  font-weight: 800 !important;
+}
+
+.trusted-customers {
+  font-size: 0.5rem !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}

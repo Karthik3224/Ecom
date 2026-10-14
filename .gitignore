@@ -1,0 +1,9 @@
+.local/
+**/target/
+**/node_modules/
+**/.env
+**/.env.*
+!.env.example
+*.log
+*.pid
+Thumbs.db

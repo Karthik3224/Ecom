@@ -1,0 +1,28 @@
+.DS_Store
+.vscode/
+target/
+
+.env
+
+# Local environment (keep examples in Git)
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Logs and temporary files
+*.log
+*.tmp
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+# Java build output and local IDE metadata
+/target/
+/build/
+.gradle/
+.idea/
+*.iml
+.classpath
+.project
+.settings/

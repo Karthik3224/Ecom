@@ -1,0 +1,12 @@
+.message-wrapper .disclaimer-text{
+  font-size: 10px;
+  max-width: 350px;
+  text-align: center;
+  margin-left: 26px;
+}
+
+.message-wrapper .disclaimer-link {
+  color: #0B6E4F !important;
+  text-decoration: underline;
+  font-weight: 600;
+}

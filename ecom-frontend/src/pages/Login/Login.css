@@ -1,0 +1,268 @@
+/* ---- Two-column auth shell ---- */
+.auth-shell {
+  width: 100%;
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  background: #ffffff;
+}
+
+/* LEFT: branding / products */
+.auth-brand {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 22px;
+  padding: 5vw;
+  background: linear-gradient(135deg, #fffef8 0%, #fff8ef 100%);
+}
+
+.auth-brand-logo {
+  width: 150px;
+}
+
+.auth-brand-title {
+  font-size: clamp(22px, 2.4vw, 32px) !important;
+  font-weight: 700 !important;
+  color: #0B6E4F !important;
+  line-height: 1.25 !important;
+  max-width: 460px;
+}
+
+.auth-brand-image {
+  width: 100%;
+  max-width: 460px;
+  max-height: 46vh;
+  object-fit: contain;
+}
+
+.auth-brand-cta {
+  background-color: #0B6E4F !important;
+  color: #fff !important;
+  height: 44px !important;
+  min-width: 220px;
+  padding: 0 28px !important;
+  border-radius: 10px !important;
+  text-transform: none !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 4px 12px rgba(11, 110, 79, 0.15) !important;
+}
+
+.auth-brand-cta:hover {
+  background-color: #08543C !important;
+}
+
+/* RIGHT: form panel */
+.auth-panel {
+  position: relative;
+  min-height: 100dvh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 72px 24px 56px;
+}
+
+.auth-panel .login-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 24px;
+}
+
+.auth-panel .login-header .header-btn {
+  text-transform: none;
+  font-weight: 600;
+  font-size: 15px;
+  color: #0B6E4F;
+}
+
+.auth-panel .login-header .header-btn:hover {
+  background-color: rgba(11, 110, 79, 0.08);
+}
+
+.login-box {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin: auto 0;
+}
+
+.auth-panel-logo {
+  display: none;
+}
+
+.login-logo {
+  width: 130px;
+  margin-bottom: 16px;
+}
+
+.login-title {
+  font-size: 24px !important;
+  font-weight: 700 !important;
+  color: #000000 !important;
+  margin-bottom: 4px !important;
+}
+
+.login-form {
+  width: 100%;
+  text-align: left;
+}
+
+/* ---- Inputs ---- */
+.custom-input,
+.custom-select-input {
+  height: 44px !important;
+  background-color: #ffffff !important;
+  border-radius: 12px !important;
+}
+
+.custom-input .MuiInputBase-root,
+.custom-select-input.MuiInputBase-root {
+  height: 44px !important;
+  border-radius: 12px !important;
+}
+
+.custom-input .MuiOutlinedInput-notchedOutline,
+.custom-select-input .MuiOutlinedInput-notchedOutline {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  border-radius: 12px !important;
+}
+
+.custom-input.Mui-focused .MuiOutlinedInput-notchedOutline,
+.custom-select-input.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #0B6E4F !important;
+  border-width: 1.5px !important;
+}
+
+/* ---- Buttons / links ---- */
+.submit-btn {
+  background-color: #0B6E4F !important;
+  color: #fff !important;
+  height: 44px !important;
+  border-radius: 12px !important;
+  text-transform: none !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  margin-top: 4px !important;
+  box-shadow: 0 4px 12px rgba(11, 110, 79, 0.15) !important;
+  transition: all 0.2s ease !important;
+}
+
+.submit-btn:hover {
+  background-color: #08543C !important;
+  box-shadow: 0 6px 16px rgba(11, 110, 79, 0.25) !important;
+}
+
+.submit-btn:disabled {
+  background-color: #ccc !important;
+  color: #888 !important;
+  box-shadow: none !important;
+}
+
+.auth-forgot-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -6px;
+}
+
+.auth-link {
+  color: #0B6E4F !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  font-family: inherit !important;
+  cursor: pointer;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #908F8F;
+  font-size: 12px;
+  font-weight: 600;
+  margin: 4px 0;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.auth-alt-btn {
+  border: 1.5px solid #0B6E4F !important;
+  color: #0B6E4F !important;
+  height: 44px !important;
+  border-radius: 12px !important;
+  text-transform: none !important;
+  font-weight: 600 !important;
+  width: 100%;
+}
+
+.auth-alt-btn:hover {
+  background-color: rgba(11, 110, 79, 0.06) !important;
+}
+
+.auth-switch-text {
+  text-align: center;
+  font-size: 13px !important;
+  color: #555 !important;
+}
+
+/* ---- Terms & disclaimer (shared component) ---- */
+.disclaimer-text {
+  font-size: 10px;
+  text-align: center;
+}
+
+.footer-agreement-text {
+  font-size: 10px;
+  text-align: center;
+}
+
+.policy-link,
+.disclaimer-link {
+  color: #0B6E4F !important;
+  font-weight: 600;
+}
+
+.disclaimer-link {
+  text-decoration: underline;
+}
+
+/* ---- Responsive: stack to single column ---- */
+@media (max-width: 900px) {
+  .auth-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-brand {
+    display: none;
+  }
+
+  .auth-panel {
+    padding-top: 72px;
+  }
+
+  .auth-panel-logo {
+    display: block;
+  }
+}
+/* Keep the application's password visibility control without Edge's duplicate. */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}

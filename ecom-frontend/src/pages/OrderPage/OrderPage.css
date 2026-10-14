@@ -1,0 +1,392 @@
+.order-page-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #f8fafc;
+  overflow: hidden;
+  font-family: 'Roboto', sans-serif;
+}
+
+/* Header Bar */
+.order-page-header {
+  height: 56px;
+  background-color: #075F40;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 16px;
+  color: #ffffff;
+  z-index: 10;
+}
+
+.order-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.order-header-title {
+  font-weight: 700 !important;
+  font-size: 1.05rem !important;
+  color: #ffffff !important;
+}
+
+.help-link {
+  font-size: 0.9rem !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  text-decoration: none !important;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+.help-link:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Scroll Content */
+.order-page-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 14px 40px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Card 1: Order Status Card */
+.order-status-card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  padding: 20px 16px 0 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+  overflow: hidden;
+}
+
+.status-subtitle {
+  font-size: 0.85rem !important;
+  color: #64748b;
+  margin-bottom: 2px !important;
+}
+
+.arriving-text {
+  font-size: 1.1rem !important;
+  font-weight: 800 !important;
+  color: #1e293b;
+  margin-bottom: 10px !important;
+}
+
+.time-pill {
+  border: 1.5px solid #10b981;
+  border-radius: 20px;
+  padding: 4px 16px;
+  background-color: #ecfdf5;
+  margin-bottom: 16px;
+}
+
+.time-pill-text {
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  color: #059669;
+}
+
+.packing-illustration-wrap {
+  width: 100%;
+  max-height: 220px;
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.packing-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+/* Card 2: Payment Due Card */
+.payment-due-card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  padding: 14px 16px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+
+.due-card-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.wallet-icon-box {
+  width: 42px;
+  height: 42px;
+  background-color: #fef3c7;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.due-text-box {
+  display: flex;
+  flex-direction: column;
+}
+
+.due-title {
+  font-weight: 800 !important;
+  font-size: 0.92rem !important;
+  color: #1e293b;
+}
+
+.due-desc {
+  font-size: 0.72rem !important;
+  color: #64748b;
+  line-height: 1.3 !important;
+  margin-top: 2px !important;
+}
+
+.due-pay-btn {
+  background-color: #075F40 !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  text-transform: none !important;
+  padding: 8px 18px !important;
+  border-radius: 8px !important;
+  font-size: 0.85rem !important;
+  box-shadow: none !important;
+  white-space: nowrap;
+}
+
+/* Card 3: Address Card */
+.order-address-card {
+  background-color: #ffffff;
+  border-radius: 14px;
+  padding: 14px 16px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.location-pin-icon {
+  color: #075F40;
+  font-size: 20px !important;
+}
+
+.order-address-text {
+  font-size: 0.8rem !important;
+  color: #334155;
+  line-height: 1.4 !important;
+}
+
+/* Card 4: Welcome Offer Promo Card */
+.welcome-promo-card {
+  background: linear-gradient(135deg, #e6f4f0 0%, #d1fae5 100%);
+  border: 1px solid #a7f3d0;
+  border-radius: 16px;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.promo-left-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.welcome-offer-tag {
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+  color: #047857;
+}
+
+.discount-heading {
+  font-size: 1.1rem !important;
+  font-weight: 800 !important;
+  color: #1e293b;
+}
+
+.highlight-percent {
+  color: #f97316;
+}
+
+.promo-badge-btn {
+  background-color: #075F40;
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 4px;
+  width: fit-content;
+  margin-top: 4px;
+}
+
+.promo-img-wrap {
+  width: 90px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.promo-jar-img {
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* Card 5: Your Order Summary */
+.order-summary-card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.summary-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.summary-icon {
+  color: #075F40;
+  font-size: 22px !important;
+}
+
+.summary-title {
+  font-size: 0.95rem !important;
+  font-weight: 800 !important;
+  color: #1e293b;
+}
+
+.summary-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.summary-item-row {
+  background-color: #f8fafc;
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #f1f5f9;
+}
+
+.summary-thumb-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background-color: #fef3c7;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.summary-thumb-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.summary-item-details {
+  flex: 1;
+}
+
+.summary-item-title {
+  font-size: 0.85rem !important;
+  font-weight: 700 !important;
+  color: #1e293b;
+}
+
+.summary-item-weight {
+  font-size: 0.72rem !important;
+  color: #64748b;
+  margin-top: 2px !important;
+}
+
+.summary-item-price {
+  font-size: 0.9rem !important;
+  font-weight: 800 !important;
+  color: #0f172a;
+}
+
+/* Card 6: Help Card */
+.order-help-card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.help-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.help-option-item {
+  background-color: #f8fafc;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #f1f5f9;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.help-option-item:hover {
+  border-color: #075F40;
+}
+
+.help-opt-icon {
+  color: #075F40;
+  font-size: 22px !important;
+}
+
+.help-opt-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.help-opt-title {
+  font-size: 0.85rem !important;
+  font-weight: 700 !important;
+  color: #1e293b;
+}
+
+.help-opt-sub {
+  font-size: 0.72rem !important;
+  color: #64748b;
+  margin-top: 1px !important;
+}

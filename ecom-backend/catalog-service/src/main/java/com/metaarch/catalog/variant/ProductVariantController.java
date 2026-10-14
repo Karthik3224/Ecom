@@ -1,0 +1,8 @@
+package com.metaarch.catalog.variant;
+import java.net.URI; import java.util.*; import jakarta.validation.Valid; import org.springframework.http.*; import org.springframework.web.bind.annotation.*;
+@RestController public class ProductVariantController {
+ private final ProductVariantService service; public ProductVariantController(ProductVariantService s){service=s;}
+ @PostMapping("/api/v1/products/{productId}/variants") ResponseEntity<ProductVariantResponse> create(@PathVariable UUID productId,@Valid @RequestBody ProductVariantRequest r){ProductVariantResponse v=service.create(productId,r);return ResponseEntity.created(URI.create("/api/v1/variants/"+v.id())).body(v);}
+ @GetMapping("/api/v1/products/{productId}/variants") List<ProductVariantResponse> list(@PathVariable UUID productId){return service.list(productId);} @GetMapping("/api/v1/variants/{id}") ProductVariantResponse get(@PathVariable UUID id){return service.get(id);}
+ @PutMapping("/api/v1/variants/{id}") ProductVariantResponse update(@PathVariable UUID id,@Valid @RequestBody ProductVariantRequest r){return service.update(id,r);} @DeleteMapping("/api/v1/variants/{id}") @ResponseStatus(HttpStatus.NO_CONTENT) void delete(@PathVariable UUID id){service.delete(id);}
+}

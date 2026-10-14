@@ -1,0 +1,46 @@
+package com.metaarch.catalog.store;
+
+import jakarta.validation.constraints.*;
+import java.math.BigDecimal;
+
+public record StoreRequest(
+  @NotBlank @Size(max = 100) String id,
+  @NotBlank @Size(max = 180) String name,
+  @Size(max = 60) String storeCode,
+  @Size(max = 2048) String logoUrl,
+  @Size(max = 1000) String description,
+  @NotBlank @Size(max = 160) String location,
+  @NotBlank @Size(max = 700) String address,
+  @Size(max = 80) String doorNumber,
+  @Size(max = 180) String streetName,
+  @Size(max = 160) String area,
+  @Size(max = 180) String landmark,
+  @Size(max = 120) String city,
+  @Size(max = 120) String district,
+  @Size(max = 120) String state,
+  @Size(max = 20) String pincode,
+  @NotNull @DecimalMin("-90.0000000") @DecimalMax("90.0000000") BigDecimal latitude,
+  @NotNull @DecimalMin("-180.0000000") @DecimalMax("180.0000000") BigDecimal longitude,
+  @Size(max = 40) String provider,
+  @Size(max = 120) String providerPlaceId,
+  @Size(max = 20) String providerOsmType,
+  @Size(max = 40) String providerOsmId,
+  @DecimalMin("0.00") BigDecimal locationAccuracyMeters,
+  @Size(max = 30) String phone,
+  @Size(max = 30) String alternatePhone,
+  @Email @Size(max = 180) String email,
+  @Size(max = 180) String adminName,
+  @DecimalMin("0.00") @DecimalMax("5.00") BigDecimal storeRating,
+  @Size(max = 30) String gstNumber,
+  @Size(max = 40) String status,
+  boolean deliveryEnabled,
+  boolean pickupEnabled,
+  @DecimalMin("0.00") BigDecimal deliveryRadiusKm,
+  @Min(0) Integer deliveryEtaMinutes,
+  @DecimalMin("0.00") BigDecimal deliveryCharge,
+  @DecimalMin("0.00") BigDecimal freeDeliveryAbove,
+  @Size(max = 300) String deliveryModes,
+  @Size(max = 500) String deliveryNotes,
+  boolean isNew,
+  boolean active
+) {}

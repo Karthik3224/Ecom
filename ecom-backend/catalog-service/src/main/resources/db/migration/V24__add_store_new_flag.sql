@@ -1,0 +1,2 @@
+ALTER TABLE stores
+  ADD COLUMN is_new BOOLEAN NOT NULL DEFAULT FALSE AFTER delivery_notes;

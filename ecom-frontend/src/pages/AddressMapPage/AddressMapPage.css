@@ -1,0 +1,234 @@
+.map-page-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #ffffff;
+  overflow: hidden;
+  font-family: 'Roboto', sans-serif;
+  position: relative;
+}
+
+/* Header Bar */
+.map-page-header {
+  height: 56px;
+  background-color: #075F40;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  color: #ffffff;
+  z-index: 10;
+}
+
+.map-header-title {
+  font-weight: 700 !important;
+  font-size: 1.1rem !important;
+  color: #ffffff !important;
+}
+
+/* Map Graphic Area */
+.map-visual-area {
+  flex: 1;
+  position: relative;
+  background-color: #e5e7eb;
+  overflow: hidden;
+}
+.map-provider-badge{position:absolute;left:14px;bottom:18px;background:#fff;color:#334155;border:1px solid #dbe2df;border-radius:6px;padding:6px 10px;font-size:12px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.map-link-actions{display:flex;gap:8px;margin-bottom:10px}.map-link-actions a{border:1px solid #bfd3c9;color:#075f40;text-transform:none;font-weight:700}.map-link-actions a:first-child{flex:1}
+
+.map-grid-background {
+  width: 100%;
+  height: 100%;
+  background: #e2e8f0;
+  position: relative;
+}
+
+.map-road {
+  position: absolute;
+  background-color: #ffffff;
+}
+
+.map-road.main-road {
+  width: 60px;
+  height: 100%;
+  left: 30%;
+  transform: rotate(-15deg);
+}
+
+.map-road.cross-road-1 {
+  height: 40px;
+  width: 100%;
+  top: 40%;
+}
+
+.map-road.cross-road-2 {
+  width: 50px;
+  height: 100%;
+  right: 25%;
+  transform: rotate(20deg);
+}
+
+.map-circle {
+  position: absolute;
+  border-radius: 50%;
+  border: 20px solid #ffffff;
+}
+
+.map-circle.circle-1 {
+  width: 120px;
+  height: 120px;
+  left: 20%;
+  top: 35%;
+}
+
+.map-circle.circle-2 {
+  width: 90px;
+  height: 90px;
+  right: 15%;
+  bottom: 20%;
+}
+
+.map-park {
+  position: absolute;
+  background-color: #d1fae5;
+  border-radius: 12px;
+}
+
+.map-park.park-1 {
+  width: 100px;
+  height: 80px;
+  left: 5%;
+  top: 15%;
+}
+
+.map-park.park-2 {
+  width: 120px;
+  height: 100px;
+  right: 10%;
+  top: 10%;
+}
+
+/* Pin & Tooltip */
+.map-pin-container {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  transform: translate(-50%, -100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 5;
+}
+
+.location-tooltip {
+  background-color: #075F40;
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 20px;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  margin-bottom: 8px;
+  position: relative;
+}
+
+.location-tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px 6px 0;
+  border-style: solid;
+  border-color: #075F40 transparent;
+}
+
+.pin-pulse-ring {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: rgba(59, 130, 246, 0.25);
+  position: absolute;
+  bottom: -6px;
+}
+
+.red-pin-head {
+  width: 24px;
+  height: 24px;
+  background-color: #ef4444;
+  border: 3px solid #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+}
+
+.inner-dot {
+  width: 6px;
+  height: 6px;
+  background-color: #ffffff;
+  border-radius: 50%;
+}
+
+/* Bottom Sheet */
+.map-bottom-sheet {
+  background-color: #ffffff;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  padding: 24px 20px;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 10;
+}
+
+.sheet-location-title {
+  font-size: 1.1rem !important;
+  font-weight: 800 !important;
+  color: #1e293b;
+}
+
+.sheet-location-sub {
+  font-size: 0.8rem !important;
+  color: #64748b;
+  margin-bottom: 16px !important;
+}
+
+.confirm-location-btn {
+  background-color: #075F40 !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  text-transform: none !important;
+  padding: 12px !important;
+  border-radius: 10px !important;
+  font-size: 1rem !important;
+  box-shadow: none !important;
+}
+
+/* Locate Me Button */
+.locate-me-btn {
+  position: absolute !important;
+  right: 16px !important;
+  bottom: 20px !important;
+  background-color: #ffffff !important;
+  color: #075F40 !important;
+  font-weight: 700 !important;
+  font-size: 0.8rem !important;
+  padding: 8px 14px !important;
+  border-radius: 20px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  text-transform: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  z-index: 10 !important;
+}
+
+.locate-me-btn:hover {
+  background-color: #f8fafc !important;
+}

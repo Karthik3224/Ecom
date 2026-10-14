@@ -1,0 +1,129 @@
+.help-page-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #ffffff;
+  overflow: hidden;
+  font-family: 'Roboto', sans-serif;
+}
+
+.help-page-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background-color: #ffffff;
+}
+
+.help-header-title {
+  font-weight: 800 !important;
+  font-size: 1.05rem !important;
+  color: #1e293b;
+}
+
+.help-page-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 16px 100px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.help-hero-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.help-intro-desc {
+  font-size: 0.76rem !important;
+  color: #475569;
+  line-height: 1.4 !important;
+}
+
+.support-agent-img-wrap {
+  width: 70px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ecfdf5;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.agent-emoji {
+  font-size: 32px;
+}
+
+.help-action-btns-row {
+  display: flex;
+  gap: 12px;
+}
+
+.call-us-btn {
+  flex: 1;
+  border-color: #075F40 !important;
+  color: #075F40 !important;
+  font-weight: 700 !important;
+  text-transform: none !important;
+  border-radius: 10px !important;
+  padding: 10px !important;
+  font-size: 0.9rem !important;
+}
+
+.email-us-btn {
+  flex: 1;
+  background-color: #075F40 !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  text-transform: none !important;
+  border-radius: 10px !important;
+  padding: 10px !important;
+  font-size: 0.9rem !important;
+  box-shadow: none !important;
+}
+
+.faq-container-card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  padding: 16px;
+  border: 1px solid #f1f5f9;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.faq-main-heading {
+  font-size: 0.95rem !important;
+  font-weight: 800 !important;
+  color: #1e293b;
+  margin-bottom: 4px !important;
+}
+
+.custom-faq-accordion {
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.custom-faq-accordion::before {
+  display: none !important;
+}
+
+.faq-question-text {
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  color: #334155;
+}
+
+.faq-answer-text {
+  font-size: 0.75rem !important;
+  color: #64748b;
+  line-height: 1.4 !important;
+}
+
+.accordion-arrow {
+  color: #1e293b;
+}
