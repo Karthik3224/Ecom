@@ -1,5 +1,6 @@
 import { apiRequest } from './apiClient';
-const CATALOG_BASE_URL = (import.meta.env.VITE_CATALOG_URL || '/catalog').replace(/\/$/, '');
+import { catalogBaseUrl } from './catalogConfig.js';
+const CATALOG_BASE_URL = catalogBaseUrl(import.meta.env);
 
 const buildQueryString = (params = {}) => {
   const search = new URLSearchParams();

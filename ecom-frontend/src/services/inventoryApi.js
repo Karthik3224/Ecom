@@ -1,6 +1,8 @@
 import { apiRequest } from './apiClient';
 
-const INVENTORY_BASE_URL = (import.meta.env.VITE_INVENTORY_URL || '/inventory').replace(/\/$/, '');
+import { inventoryBaseUrl } from './inventoryConfig.js';
+
+const INVENTORY_BASE_URL = inventoryBaseUrl(import.meta.env);
 const buildQueryString = (params = {}) => {
   const search = new URLSearchParams();
   ['productId', 'variantId', 'storeId', 'status', 'page', 'size', 'sort'].forEach((key) => {

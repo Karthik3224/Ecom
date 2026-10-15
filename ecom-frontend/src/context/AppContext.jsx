@@ -312,7 +312,6 @@ export const AppProvider = ({ children }) => {
         const localStores = collectionStore.list('stores').filter((store) => store.status !== 'Inactive' && store.active !== false);
         if (localStores.length) {
           setCatalogStores(localStores);
-          setCatalogError(null);
         } else {
           setCatalogError('Products and delivery availability could not be loaded. Please retry in a moment.');
         }

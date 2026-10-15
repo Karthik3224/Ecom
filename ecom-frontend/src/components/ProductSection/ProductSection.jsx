@@ -1,4 +1,4 @@
-import { useContext, useRef, useState, useEffect } from 'react';
+import { Children, useContext, useRef, useState, useEffect } from 'react';
 import { Box, Typography, IconButton } from '@mui/material';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
@@ -6,7 +6,8 @@ import './ProductSection.css';
 import { AppContext } from '../../context/AppContext';
 
 const ProductSection = ({ title, subtitle, children, hasViewAll = true, onViewAll }) => {
-  const { t } = useContext(AppContext);
+  const { t, catalogLoading, catalogError } = useContext(AppContext);
+  const empty = Children.toArray(children).length === 0;
   const scrollRef = useRef(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
@@ -51,9 +52,9 @@ const ProductSection = ({ title, subtitle, children, hasViewAll = true, onViewAl
           </IconButton>
         )}
         <Box className="section-content" ref={scrollRef} onScroll={handleScroll}>
-          {children}
+          {empty ? <Typography color="text.secondary" role="status">{catalogLoading ? 'Loading catalog...' : catalogError ? 'Products could not be loaded. Please retry above.' : 'No products available in this section.'}</Typography> : children}
         </Box>
-        {showRightArrow && (
+        {!empty && showRightArrow && (
           <IconButton className="scroll-arrow scroll-arrow-right" onClick={() => scroll(250)}>
             <KeyboardArrowRightIcon />
           </IconButton>

@@ -10,6 +10,7 @@ import { deliverySummary } from '../../utils/storeDelivery';
 import fallbackProductImage from '../../assets/images/mango_pickle_jar.png';
 import './ProductCard.css';
 import { findInventoryForItem } from '../../services/inventoryApi';
+import { loadProductStock } from '../../utils/productStock.js';
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const dbVariantId = (value) => UUID_PATTERN.test(String(value || '')) ? value : null;
@@ -34,23 +35,20 @@ const ProductCard = ({ title, weight, price, image, ...details }) => {
   const cardRef = useRef(null);
   const [inView, setInView] = useState(typeof IntersectionObserver === 'undefined');
   const [stock, setStock] = useState(null);
+  const [stockAttempt, setStockAttempt] = useState(0);
   const stockStoreId = store?.id || details.storeId;
   const stockScope = `${user?.id}:${stockStoreId}:${productId}:${inventoryVariantId || 'product'}`;
   useEffect(() => {
     if (!user?.id || !inView || !stockStoreId || !productId) return undefined;
     let active = true;
-    findInventoryForItem({ storeId: stockStoreId, productId, variantId: inventoryVariantId })
-      .then(value => {
-        if (active) {
-          const variantMatches = inventoryVariantId ? value.variantId === inventoryVariantId : true;
-          setStock({ scope: stockScope, available: value.storeId === stockStoreId && value.productId === productId && variantMatches && value.status === 'ACTIVE' ? value.availableQuantity : 0 });
-        }
-      })
-      .catch(() => { if (active) setStock({ scope: stockScope, available: 0, unavailable: true }); });
+    loadProductStock(findInventoryForItem, { storeId: stockStoreId, productId, variantId: inventoryVariantId })
+      .then(result => { if (active) setStock({ scope: stockScope, attempt: stockAttempt, ...result }); });
     return () => { active = false; };
-  }, [user?.id, inView, stockStoreId, productId, inventoryVariantId, stockScope]);
-  const checkingStock = Boolean(user?.id && (!stock || stock.scope !== stockScope));
-  const noStock = Boolean(user?.id && stock?.scope === stockScope && !(stock.available > 0));
+  }, [user?.id, inView, stockStoreId, productId, inventoryVariantId, stockScope, stockAttempt]);
+  const currentStock = stock?.scope === stockScope && stock?.attempt === stockAttempt ? stock : null;
+  const checkingStock = Boolean(user?.id && !currentStock);
+  const stockError = Boolean(user?.id && currentStock?.state === 'error');
+  const noStock = Boolean(user?.id && currentStock && currentStock.state !== 'available');
   useEffect(() => {
     const node = cardRef.current;
     if (!node || inView) return undefined;
@@ -119,12 +117,12 @@ const ProductCard = ({ title, weight, price, image, ...details }) => {
 
   const handleAdd = (e) => {
     e.stopPropagation();
-    if (hasProductIdentity && Number(product.price) > 0) addToCart(product);
+    if (!checkingStock && !noStock && hasProductIdentity && Number(product.price) > 0) addToCart(product);
   };
 
   const handleIncrement = (e) => {
     e.stopPropagation();
-    if (hasProductIdentity && Number(product.price) > 0) addToCart(product);
+    if (!checkingStock && !noStock && hasProductIdentity && Number(product.price) > 0) addToCart(product);
   };
 
   const handleDecrement = (e) => {
@@ -160,8 +158,8 @@ const ProductCard = ({ title, weight, price, image, ...details }) => {
             <Typography className="product-price">{Number(price) > 0 ? formatCurrency(price) : t('unavailable')}</Typography>
           </Box>
           {quantity === 0 ? (
-            <Button variant="contained" className="add-btn" disabled={checkingStock || noStock || details.active === false || !hasProductIdentity || !(Number(product.price) > 0)} onClick={handleAdd}>
-              {checkingStock ? 'Checking' : noStock && stock.unavailable ? 'Unavailable' : noStock || details.active === false || !hasProductIdentity || !(Number(product.price) > 0) ? t('out') : t('add')}
+            <Button variant="contained" className="add-btn" disabled={checkingStock || (noStock && !stockError) || details.active === false || !hasProductIdentity || !(Number(product.price) > 0)} onClick={(event) => { if (stockError) { event.stopPropagation(); setStockAttempt((attempt) => attempt + 1); } else handleAdd(event); }}>
+              {checkingStock ? 'Checking' : stockError ? 'Retry stock' : currentStock?.state === 'missing' ? 'No stock record' : noStock || details.active === false || !hasProductIdentity || !(Number(product.price) > 0) ? t('out') : t('add')}
             </Button>
           ) : (
             <Box className="qty-control-box">
@@ -169,7 +167,7 @@ const ProductCard = ({ title, weight, price, image, ...details }) => {
                 -
               </button>
               <Typography className="qty-count-text">{quantity}</Typography>
-              <button type="button" className="qty-action-btn" disabled={checkingStock || noStock || (user?.id && stock?.available <= quantity)} onClick={handleIncrement}>
+              <button type="button" className="qty-action-btn" disabled={checkingStock || noStock || (user?.id && currentStock?.available <= quantity)} onClick={handleIncrement}>
                 +
               </button>
             </Box>

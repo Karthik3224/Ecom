@@ -348,7 +348,7 @@ const Home = () => {
             <Box className="categories-and-promo-section">
               <Box className="shop-by-categories">
                 <ProductSection title={t('bestSellers')} subtitle="Here's what everyone's loving!" onViewAll={() => setCollection('bestSeller')}>
-                  {uniqueByProduct(merchProducts('bestSeller').concat(availableProductPool)).slice(0,12).map((prod, idx) => <ProductCard key={productCardKey(prod, `:${idx}`)} {...prod} />)}
+                  {merchProducts('bestSeller').slice(0,12).map((prod, idx) => <ProductCard key={productCardKey(prod, `:${idx}`)} {...prod} />)}
                 </ProductSection>
               </Box>
               <Box className="promo-banner-container">
