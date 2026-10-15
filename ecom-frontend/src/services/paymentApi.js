@@ -3,7 +3,7 @@ import { apiRequest } from './apiClient';
 export const PAYMENT_STATUSES = ['PENDING', 'SUCCESS', 'FAILED', 'REFUNDED'];
 export const PAYMENT_METHODS = ['DEMO_CARD', 'DEMO_UPI', 'DEMO_COD'];
 
-const PAYMENT_BASE_URL = (import.meta.env.VITE_PAYMENT_URL || '/payments').replace(/\/$/, '');
+const PAYMENT_BASE_URL = (import.meta.env.VITE_PAYMENT_URL || '/payment-service').replace(/\/$/, '');
 
 const request = (path, options = {}) => apiRequest(PAYMENT_BASE_URL, path, options);
 export const getPaymentCapabilities = () => request('/api/v1/payments/capabilities');

@@ -318,7 +318,7 @@ const PaymentOptions = () => {
         }
         if (!existingOrderId) {
           finishCheckoutCart(customerId, order.storeId);
-          await clearCart();
+
         }
         setResult({ order, payment: pendingPayment || { status: 'PENDING', amount: payableAmount, paymentMethod: selectedPaymentMethod, paymentId: '' } });
         setStatus('succeeded');
@@ -392,7 +392,7 @@ const PaymentOptions = () => {
       if (isCashOnDelivery) {
         if (!existingOrderId) {
           finishCheckoutCart(customerId, order.storeId);
-          await clearCart();
+
         }
         setResult({ order, payment: { status: 'PENDING', amount: payableAmount, paymentMethod, paymentId: '' } });
         setStatus('succeeded');
@@ -431,7 +431,7 @@ const PaymentOptions = () => {
         }
         if (!existingOrderId) {
           finishCheckoutCart(customerId, order.storeId);
-          await clearCart();
+
         }
         setResult({ order: paidOrder, payment: latestPayment });
         setStatus('succeeded');

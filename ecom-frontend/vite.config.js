@@ -9,10 +9,25 @@ export default defineConfig({
 
   server: {
     host: '0.0.0.0',
-    port: 5173,
+    port: 5175,
     strictPort: true,
 
     proxy: {
+      '/alerts-service': {
+        target: BACKEND_URL,
+        changeOrigin: true,
+      },
+
+      '/org-access': {
+        target: BACKEND_URL,
+        changeOrigin: true,
+      },
+
+      '/customer-profile': {
+        target: BACKEND_URL,
+        changeOrigin: true,
+      },
+
       '/catalog-service': {
         target: BACKEND_URL,
         changeOrigin: true,
