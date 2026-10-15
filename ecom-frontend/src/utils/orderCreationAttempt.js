@@ -1,3 +1,4 @@
+import { requestId } from './requestId.js';
 export const createOrderAttempt = async (data, send, storage = sessionStorage) => {
   const slot = `order-attempt:${data.customerId}:${data.storeId}`;
   const saved = JSON.parse(storage.getItem(slot) || 'null');
@@ -7,7 +8,7 @@ export const createOrderAttempt = async (data, send, storage = sessionStorage) =
   if (saved && saved.body !== body) {
     throw new Error('An earlier checkout has an unresolved result. Retry that checkout before changing the order.');
   }
-  const attempt = saved || { body, key: crypto.randomUUID() };
+  const attempt = saved || { body, key: requestId() };
   // Persist before sending: a lost response or page reload must reuse the key.
   storage.setItem(slot, JSON.stringify(attempt));
   let result;

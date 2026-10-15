@@ -24,10 +24,9 @@ public class OrderReviewService {
   @Transactional
   public OrderReviewResponse save(UUID orderId, OrderReviewRequest request) {
     Order order=orders.findLockedById(orderId).orElseThrow(() -> new com.metaarch.order.exception.ResourceNotFoundException("Order not found"));
-    // Fulfillment owns the delivery lifecycle. Some older orders retain CREATED
-    // in the order row after their shipment is delivered, so do not block a
-    // customer review on that stale parent status. Cancelled orders remain ineligible.
-    if (order.getStatus()==OrderStatus.CANCELLED) throw new InvalidOrderStateException("A review can be submitted after delivery is complete.");
+    // A stale order row is not proof of delivery. Require the authoritative
+    // order lifecycle to confirm eligibility before writing a customer review.
+    if (order.getStatus()!=OrderStatus.DELIVERED) throw new InvalidOrderStateException("A review can be submitted after delivery is complete.");
     List<String> photos=Optional.ofNullable(request.photoUrls()).orElse(List.of()).stream().filter(Objects::nonNull).map(String::trim).filter(value -> value.startsWith("data:image/") || value.startsWith("https://")).toList();
     if (photos.size()!=Optional.ofNullable(request.photoUrls()).orElse(List.of()).size()) throw new IllegalArgumentException("Review photos must be image data or HTTPS URLs.");
     String photoJson;

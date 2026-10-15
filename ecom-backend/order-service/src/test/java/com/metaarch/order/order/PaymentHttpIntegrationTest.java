@@ -38,6 +38,23 @@ class PaymentHttpIntegrationTest {
   @org.springframework.boot.test.mock.mockito.MockBean CatalogDeliveryQuoteClient catalog;
   @org.springframework.boot.test.mock.mockito.MockBean CheckoutCartClient cart;
 
+  @Test void reviewsRetainAuthenticationOwnershipAndDeliveryGuards() {
+    UUID owner = UUID.randomUUID();
+    Order order = orders.saveAndFlush(new Order(owner, UUID.randomUUID(), "test-store", UUID.randomUUID().toString()));
+    String path = "/api/v1/orders/" + order.getId() + "/review";
+    var headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    String body = "{\"rating\":5,\"comment\":\"Great service\",\"photoUrls\":[]}";
+    assertThat(http.exchange(path, HttpMethod.POST, new HttpEntity<>(body, headers), String.class).getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    headers.setBearerAuth(UUID.randomUUID().toString());
+    assertThat(http.exchange(path, HttpMethod.POST, new HttpEntity<>(body, headers), String.class).getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    assertThat(http.exchange(path, HttpMethod.GET, new HttpEntity<>(headers), String.class).getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    headers.setBearerAuth(owner.toString());
+    var rejected = http.exchange(path, HttpMethod.POST, new HttpEntity<>(body, headers), String.class);
+    assertThat(rejected.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+    assertThat(rejected.getBody()).contains("A review can be submitted after delivery is complete.");
+  }
+
   @org.junit.jupiter.api.BeforeEach void prepareCreationSchema() {
     org.mockito.Mockito.reset(decoder);
     org.mockito.Mockito.when(decoder.decode(org.mockito.ArgumentMatchers.anyString())).thenAnswer(call ->

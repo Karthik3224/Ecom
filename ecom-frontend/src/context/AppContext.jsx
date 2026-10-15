@@ -1,3 +1,4 @@
+import { mutateAuthenticatedCart } from '../utils/authenticatedCart.js';
 import { translate, normalizeLanguage, languageCode } from '../i18n/index';
 import { readLanguage, persistLanguage } from '../i18n/preferences';
 import { customerAuthService } from '../services/customerAuthService';
@@ -8,7 +9,7 @@ import { getCustomerOrders, normalizeOrder, orderDeliveryAddress } from '../serv
 import { collectionStore } from '../services/localDataService';
 import { getProducts, getCategories, getCategoryProducts, getStoreProducts, getStores, getBanners } from '../services/catalogApi';
 import { adaptProductList, adaptCategoryList, adaptStoreProductList, adaptBannerList } from '../services/catalogAdapter';
-import { addCartItem, calculateCartTotal, clearCartItems, createCart, getActiveCart, removeCartItem, updateCartItem } from '../services/cartApi';
+import { addCartItem, clearCartItems, createCart, getActiveCart, removeCartItem, updateCartItem } from '../services/cartApi';
 import { rememberProductStore, resolveProductStore } from '../services/productStoreResolver';
 import { cleanDisplayText } from '../utils/textEncoding';
 import { findInventoryForItem } from '../services/inventoryApi';
@@ -68,7 +69,7 @@ export const AppProvider = ({ children }) => {
   const readGuestCartItems = () => {
     try {
       const saved = localStorage.getItem(GUEST_CART_KEY);
-      return saved ? JSON.parse(saved) : [];
+      return saved ? JSON.parse(saved).map(item => ({ ...item, id: null, cartSource: 'guest' })) : [];
     } catch {
       return [];
     }
@@ -137,7 +138,7 @@ export const AppProvider = ({ children }) => {
 
   const cartCount = cartItems.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
   const localCartTotal = (items = cartItems) => items.reduce((sum, item) => sum + Number(item.price || item.unitPrice || 0) * Number(item.quantity || 0), 0);
-  const cartTotal = Number(activeCart?.totalAmount ?? localCartTotal());
+  const cartTotal = localCartTotal();
   const currentCustomerId = () => tokenCustomerId() || user?.id || null;
 
   const resolveProductIdentity = (product) => {
@@ -169,7 +170,8 @@ export const AppProvider = ({ children }) => {
       storeId: item?.storeId || cartStore.storeId || source.storeId,
       store: item?.store || item?.storeName || cartStore.store || source.store,
       storeName: item?.storeName || item?.store || cartStore.storeName || source.storeName,
-      id: item?.id || null,
+      id: cart?.id ? item?.id || null : null,
+      cartSource: cart?.id ? 'server' : 'guest',
       productId: item?.productId || null,
       variantId: item?.variantId ?? null,
       productName: cleanDisplayText(item?.productName || item?.title || 'Product'),
@@ -209,7 +211,7 @@ export const AppProvider = ({ children }) => {
   };
 
   const applyGuestCartItems = (items) => {
-    const normalized = items.map(adaptCartItem).filter((item) => item.productId && item.quantity > 0);
+    const normalized = items.map(item => adaptCartItem(item)).filter((item) => item.productId && item.quantity > 0);
     localStorage.setItem(GUEST_CART_KEY, JSON.stringify(normalized));
     setCartItems(normalized);
     setActiveCart(normalized.length ? { id: GUEST_CART_ID, status: 'GUEST', totalAmount: localCartTotal(normalized) } : null);
@@ -219,7 +221,7 @@ export const AppProvider = ({ children }) => {
   };
 
   const upsertGuestCartItem = (itemPayload) => {
-    const items = readGuestCartItems().map(adaptCartItem);
+    const items = readGuestCartItems().map(item => adaptCartItem(item));
     const existingIndex = items.findIndex((item) => sameCatalogItem(item, itemPayload));
     const nextItems = [...items];
     if (existingIndex >= 0) {
@@ -243,7 +245,8 @@ export const AppProvider = ({ children }) => {
     return {
       ...source,
       ...product,
-      id: identity.productId,
+      id: null,
+      cartSource: 'guest',
       productId: identity.productId,
       variantId: identity.variantId,
       productName: cleanDisplayText(product.productName || product.title || product.name || 'Product'),
@@ -365,7 +368,7 @@ export const AppProvider = ({ children }) => {
   }, [isLoggedIn]);
   useEffect(() => {
     const token = sessionStorage.getItem('authToken');
-    const customerId = currentCustomerId();
+    const customerId = tokenCustomerId() || user?.id || null;
     if (!isLoggedIn || !token || token.startsWith('local-') || !customerId) return;
     getCustomerOrders(customerId, { expireSession: false }).then((orders) => {
       const seen = new Set();
@@ -475,75 +478,34 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  const ensureCart = async (scopeProduct, options = {}) => {
-    const scope = cartScopeFor(scopeProduct);
-    if (!scope.customerId) throw new Error('Log in to use your cart.');
-    if (!scope.storeId) throw new Error('Select a store before using the cart.');
-    if (activeCart?.id && activeCart.customerId === scope.customerId && activeCart.storeId === scope.storeId && activeCart.status === 'ACTIVE') return activeCart;
-    try {
-      const cart = await getActiveCart(scope);
-      if (options.preserveVisibleItems) {
-        setActiveCart(cart);
-        setCartUnavailable(false);
-        setCartError('');
-        return cart;
-      }
-      return applyCartResponse(cart);
-    } catch (error) {
-      if (error.status !== 404) throw error;
-      const cart = await createCart({ customerId: scope.customerId, storeId: scope.storeId });
-      if (options.preserveVisibleItems) {
-        setActiveCart(cart);
-        setCartUnavailable(false);
-        setCartError('');
-        return cart;
-      }
-      return applyCartResponse(cart);
-    }
-  };
-
-  const refreshCartTotal = async (cartId, options = {}) => {
-    const cart = await calculateCartTotal(cartId);
-    if (options.mergeStoreItems) return mergeCartResponse(cart);
-    return applyCartResponse(cart);
-  };
-
-  // eslint-disable-next-line no-unused-vars
-  const migrateGuestCartToCustomer = async (customerId) => {
-    const guestItems = readGuestCartItems().map(adaptCartItem).filter((item) => item.productId && item.quantity > 0);
-    if (!guestItems.length || !customerId) return false;
-    const storeId = resolveCartStoreId(guestItems[0]);
-    if (!storeId) {
-      applyGuestCartItems(guestItems);
-      setCartError('Select a store to sync your saved cart.');
-      return false;
-    }
-    let cart;
-    try {
+  const cartMutationQueue = useRef(Promise.resolve());
+  const runAuthenticatedCartMutation = (item, operation, delta = 0) => {
+    const customerId = currentCustomerId();
+    const storeId = resolveCartStoreId(item);
+    const pending = cartMutationQueue.current.catch(() => {}).then(async () => {
+      if (currentCustomerId() !== customerId) return false;
+      setCartLoading(true);
+      const applyOwnedCart = cart => {
+        if (currentCustomerId() === customerId) mergeCartResponse(cart);
+      };
       try {
-        cart = await getActiveCart({ customerId, storeId });
-      } catch (error) {
-        if (error.status !== 404) throw error;
-        cart = await createCart({ customerId, storeId });
-      }
-      for (const item of guestItems) {
-        await addCartItem(cart.id, {
-          productId: item.productId,
-          variantId: item.variantId,
-          productName: item.productName,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
+        const cart = await mutateAuthenticatedCart({ customerId, storeId, item, operation, delta,
+          api: { getActiveCart, createCart, addCartItem, updateCartItem, removeCartItem, clearCartItems },
+          checkInventory: stores => validateCheckoutAvailability(stores, findInventoryForItem),
+          onReconciled: applyOwnedCart,
         });
-      }
-      localStorage.removeItem(GUEST_CART_KEY);
-      await refreshCartTotal(cart.id);
-      return true;
-    } catch (error) {
-      setCartUnavailable(isCartServiceUnavailable(error));
-      setCartError(error.message || 'Could not sync your saved cart.');
-      applyGuestCartItems(guestItems);
-      return false;
-    }
+        applyOwnedCart(cart);
+        return true;
+      } catch (error) {
+        if (currentCustomerId() === customerId) {
+          setCartUnavailable(isCartServiceUnavailable(error));
+          setCartError(error.message || 'Cart Service is unavailable.');
+        }
+        return false;
+      } finally { setCartLoading(false); }
+    });
+    cartMutationQueue.current = pending;
+    return pending;
   };
 
   useEffect(() => {
@@ -562,27 +524,8 @@ export const AppProvider = ({ children }) => {
     const itemPayload = buildCartItem(product);
     if (!itemPayload) return;
     if (isLoggedIn && currentCustomerId()) {
-      const current = cartItems.find(item => sameCatalogItem(item, itemPayload));
-      try {
-        await validateCheckoutAvailability([{ storeId: itemPayload.storeId, items: [{ ...itemPayload, quantity: Number(current?.quantity || 0) + 1 }] }], findInventoryForItem);
-        const cart = await ensureCart(itemPayload, { preserveVisibleItems: true });
-        const existing = cartItems.find(item => sameCatalogItem(item, itemPayload));
-        if (existing?.id) {
-          await updateCartItem(cart.id, existing.id, { quantity: Number(existing.quantity || 0) + 1 });
-        } else {
-          await addCartItem(cart.id, {
-            productId: itemPayload.productId,
-            variantId: itemPayload.variantId,
-            productName: itemPayload.productName,
-            quantity: 1,
-            unitPrice: itemPayload.unitPrice,
-          });
-        }
-        await refreshCartTotal(cart.id, { mergeStoreItems: true });
-        setCartError('');
-        triggerAddedPopup(itemPayload);
-        return;
-      } catch (error) { setCartError(error.message); return; }
+      if (await runAuthenticatedCartMutation({ ...itemPayload, quantity: 1 }, 'add')) triggerAddedPopup(itemPayload);
+      return;
     }
     upsertGuestCartItem(itemPayload);
     triggerAddedPopup(itemPayload);
@@ -590,75 +533,32 @@ export const AppProvider = ({ children }) => {
 
   const updateQuantity = async (productId, variantId, delta, storeId = '') => {
     const match = { productId, variantId, storeId };
-    const current = cartItems.find((item) => sameCatalogItem(item, match));
-    if (isLoggedIn && currentCustomerId() && current && Number(delta) > 0) {
-      try {
-        await validateCheckoutAvailability([{ storeId: current.storeId, items: [{ ...current, quantity: Number(current.quantity) + Number(delta) }] }], findInventoryForItem);
-        setCartError('');
-      } catch (error) { setCartError(error.message); return; }
-    }
-    if (!isLoggedIn || activeCart?.id === GUEST_CART_ID) {
-      const nextQuantity = Number(current?.quantity || 0) + Number(delta || 0);
-      applyGuestCartItems(cartItems.flatMap((item) => {
-        if (!sameCatalogItem(item, match)) return [item];
-        return nextQuantity > 0 ? [{ ...item, quantity: nextQuantity, totalPrice: Number(item.unitPrice || item.price || 0) * nextQuantity }] : [];
-      }));
+    const current = cartItems.find(item => sameCatalogItem(item, match));
+    if (!current) return;
+    if (isLoggedIn && currentCustomerId()) {
+      await runAuthenticatedCartMutation(current, 'update', delta);
       return;
     }
-    if (!activeCart?.id || !current?.id) return;
     const nextQuantity = Number(current.quantity || 0) + Number(delta || 0);
-    setCartLoading(true);
-    try {
-      if (nextQuantity <= 0) {
-        await removeCartItem(activeCart.id, current.id);
-      } else {
-        await updateCartItem(activeCart.id, current.id, { quantity: nextQuantity });
-      }
-      await refreshCartTotal(activeCart.id);
-    } catch (error) {
-      setCartUnavailable(isCartServiceUnavailable(error));
-      setCartError(error.message || 'Cart Service is unavailable.');
-    } finally {
-      setCartLoading(false);
-    }
+    applyGuestCartItems(readGuestCartItems().flatMap(item => !sameCatalogItem(item, match) ? [item]
+      : nextQuantity > 0 ? [{ ...item, quantity: nextQuantity, totalPrice: Number(item.unitPrice || item.price || 0) * nextQuantity }] : []));
   };
 
   const removeFromCart = async (productId, variantId, storeId = '') => {
     const match = { productId, variantId, storeId };
-    const current = cartItems.find((item) => sameCatalogItem(item, match));
-    if (!isLoggedIn || activeCart?.id === GUEST_CART_ID) {
-      applyGuestCartItems(cartItems.filter((item) => !sameCatalogItem(item, match)));
+    const current = cartItems.find(item => sameCatalogItem(item, match));
+    if (!current) return;
+    if (isLoggedIn && currentCustomerId()) {
+      await runAuthenticatedCartMutation(current, 'remove');
       return;
     }
-    if (!activeCart?.id || !current?.id) return;
-    setCartLoading(true);
-    try {
-      await removeCartItem(activeCart.id, current.id);
-      await refreshCartTotal(activeCart.id);
-    } catch (error) {
-      setCartUnavailable(isCartServiceUnavailable(error));
-      setCartError(error.message || 'Cart Service is unavailable.');
-    } finally {
-      setCartLoading(false);
-    }
+    applyGuestCartItems(readGuestCartItems().filter(item => !sameCatalogItem(item, match)));
   };
 
   const clearCart = async () => {
-    if (!isLoggedIn || activeCart?.id === GUEST_CART_ID) {
-      applyGuestCartItems([]);
-      return;
-    }
-    if (!activeCart?.id) return;
-    setCartLoading(true);
-    try {
-      await clearCartItems(activeCart.id);
-      await refreshCartTotal(activeCart.id);
-    } catch (error) {
-      setCartUnavailable(isCartServiceUnavailable(error));
-      setCartError(error.message || 'Cart Service is unavailable.');
-    } finally {
-      setCartLoading(false);
-    }
+    if (!isLoggedIn || !currentCustomerId()) { applyGuestCartItems([]); return; }
+    const stores = [...new Set(cartItems.map(item => item.storeId))];
+    for (const storeId of stores) await runAuthenticatedCartMutation({ storeId }, 'clear');
   };
   const toggleWishlist = (product) => setWishlistItems((items) => {
     const itemPayload = buildCartItem(product);
@@ -690,8 +590,8 @@ export const AppProvider = ({ children }) => {
     const itemPayload = adaptCartItem(product);
     if (!itemPayload?.productId) return;
     const quantity = Math.max(1, Number(itemPayload.quantity || 1));
-    if (!isLoggedIn || activeCart?.id === GUEST_CART_ID) {
-      const items = readGuestCartItems().map(adaptCartItem);
+    if (!isLoggedIn || !currentCustomerId()) {
+      const items = readGuestCartItems().map(item => adaptCartItem(item));
       const existingIndex = items.findIndex((item) => sameCatalogItem(item, itemPayload));
       const nextItems = [...items];
       if (existingIndex >= 0) {
@@ -705,23 +605,8 @@ export const AppProvider = ({ children }) => {
       setSavedForLater((items) => items.filter((item) => !sameCatalogItem(item, itemPayload)));
       return;
     }
-    setCartLoading(true);
-    try {
-      const cart = await ensureCart(itemPayload);
-      await addCartItem(cart.id, {
-        productId: itemPayload.productId,
-        variantId: itemPayload.variantId,
-        productName: itemPayload.productName,
-        quantity,
-        unitPrice: itemPayload.unitPrice,
-      });
-      await refreshCartTotal(cart.id);
-      setSavedForLater((items) => items.filter((item) => !sameCatalogItem(item, itemPayload)));
-    } catch (error) {
-      setCartUnavailable(isCartServiceUnavailable(error));
-      setCartError(error.message || 'Could not move item back to cart.');
-    } finally {
-      setCartLoading(false);
+    if (await runAuthenticatedCartMutation({ ...itemPayload, quantity }, 'add')) {
+      setSavedForLater(items => items.filter(item => !sameCatalogItem(item, itemPayload)));
     }
   };
   const addAddress = async (address) => {

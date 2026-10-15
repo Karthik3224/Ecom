@@ -1,3 +1,4 @@
+import { requestId } from '../utils/requestId.js';
 import { apiRequest } from './apiClient';
 
 const CART_BASE_URL = (import.meta.env.VITE_CART_URL || '/cart-api').replace(/\/$/, '');
@@ -21,7 +22,7 @@ export const getCart = async (cartId) => request(`/api/v1/carts/${encodeURICompo
 
 export const getActiveCart = async ({ customerId, storeId }) => request(`/api/v1/carts/active${buildQueryString({ customerId, storeId })}`);
 
-export const addCartItem = async (cartId, data, key = crypto.randomUUID()) => request(`/api/v1/carts/${encodeURIComponent(cartId)}/items`, { method: 'POST', body: JSON.stringify(data), headers: { 'Idempotency-Key': key } });
+export const addCartItem = async (cartId, data, key = requestId()) => request(`/api/v1/carts/${encodeURIComponent(cartId)}/items`, { method: 'POST', body: JSON.stringify(data), headers: { 'Idempotency-Key': key } });
 
 export const updateCartItem = async (cartId, itemId, data) => request(`/api/v1/carts/${encodeURIComponent(cartId)}/items/${encodeURIComponent(itemId)}`, { method: 'PATCH', body: JSON.stringify(data) });
 

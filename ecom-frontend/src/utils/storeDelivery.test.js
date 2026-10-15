@@ -1,4 +1,4 @@
-`import test from 'node:test';
+import test from 'node:test';
 import assert from 'node:assert/strict';
 import { deliveryProducts, isGlobalProduct } from './storeDelivery.js';
 import { balancedStoreProductPreview } from './storeProductListings.js';
