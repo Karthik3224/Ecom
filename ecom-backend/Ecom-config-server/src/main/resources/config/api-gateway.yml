@@ -100,6 +100,12 @@ spring:
             - Path=/payment-service/**
           filters:
             - StripPrefix=1
+        - id: fulfillment-api
+          uri: lb://fulfillment-service
+          predicates:
+            - Path=/fulfillment/**
+          filters:
+            - StripPrefix=1
         - id: fulfillment-service
           uri: lb://fulfillment-service
           predicates:
@@ -125,7 +131,40 @@ spring:
           filters:
             - StripPrefix=1
 
+        - id: catalog-service
+          uri: lb://catalog-service
+          predicates:
+            - Path=/catalog-service/**
+          filters:
+            - StripPrefix=1
+        - id: order-service
+          uri: lb://order-service
+          predicates:
+            - Path=/order-service/**
+          filters:
+            - StripPrefix=1
+        - id: order-api
+          uri: lb://order-service
+          predicates:
+            - Path=/order-api/**
+          filters:
+            - StripPrefix=1
+
+        - id: cart-api
+          uri: lb://cart-service
+          predicates:
+            - Path=/cart-api/**
+          filters:
+            - StripPrefix=1
+
+        - id: cart-service
+          uri: lb://cart-service
+          predicates:
+            - Path=/cart-service/**
+          filters:
+            - StripPrefix=1
+
 eureka:
   client:
     service-url:
-      defaultZone: "${EUREKA_SERVER_URL:http://localhost:8761/eureka}"
+      defaultZone: "http://localhost:8761/eureka"

@@ -6,7 +6,7 @@ spring:
     password: ${MYSQL_PASSWORD:rootroot}
   jpa.hibernate.ddl-auto: validate
 app:
-  jwt.secret: ${JWT_SECRET:change-this-secret-to-a-long-random-string}
+  jwt.secret: ${JWT_SECRET:KMFZLQ3X0AEaQBVwFkrssIUJ6XG0pw67QXWxvK_MUppibhcL7Eh1r7fRDImeg6wE}
   storage.attachment-location: ${BUG_STORAGE_LOCATION:./data/bug-files}
 springdoc.swagger-ui:
   config-url: ${SWAGGER_CONFIG_URL:/bug-management/v3/api-docs/swagger-config}

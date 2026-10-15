@@ -1,5 +1,5 @@
 server:
-  port: ${SERVER_PORT:8091}
+  port: 8091
 
 spring:
   autoconfigure:
@@ -8,12 +8,12 @@ spring:
     name: cart-service
 
   config:
-    import: "optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}"
+    import: "optional:configserver:http://localhost:8888"
 
   datasource:
-    url: "jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DB:cart_service}?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
-    username: ${MYSQL_USERNAME:root}
-    password: ${MYSQL_PASSWORD:root}
+    url: "jdbc:mysql://localhost:3306/cart_service?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
+    username: "root"
+    password: "root"
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -25,18 +25,18 @@ spring:
         dialect: org.hibernate.dialect.MySQLDialect
 
   flyway:
-    enabled: ${FLYWAY_ENABLED:true}
-    baseline-on-migrate: ${FLYWAY_BASELINE_ON_MIGRATE:true}
+    enabled: true
+    baseline-on-migrate: true
 
 app:
   jwt:
-    secret: ${JWT_SECRET}
-    issuer: ${JWT_ISSUER:org-access}
+    secret: "KMFZLQ3X0AEaQBVwFkrssIUJ6XG0pw67QXWxvK_MUppibhcL7Eh1r7fRDImeg6wE"
+    issuer: org-access
 
 eureka:
   client:
     service-url:
-      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka}
+      defaultZone: http://localhost:8761/eureka
 
 management:
   endpoints:

@@ -21,7 +21,7 @@ spring:
 
 app:
   jwt:
-    secret: "${JWT_SECRET:change-this-secret-to-a-long-random-string}"
+    secret: "${JWT_SECRET:KMFZLQ3X0AEaQBVwFkrssIUJ6XG0pw67QXWxvK_MUppibhcL7Eh1r7fRDImeg6wE}"
   kafka:
     booking-alert-topic: booking-alerts-topic
     house-created-topic: house-created-topic

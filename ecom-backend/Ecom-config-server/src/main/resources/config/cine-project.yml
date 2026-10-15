@@ -7,7 +7,7 @@ spring:
     password: ${MYSQL_PASSWORD:rootroot}
   jpa:
     hibernate.ddl-auto: update
-app.jwt.secret: ${JWT_SECRET:change-this-secret-to-a-long-random-string}
+app.jwt.secret: ${JWT_SECRET:KMFZLQ3X0AEaQBVwFkrssIUJ6XG0pw67QXWxvK_MUppibhcL7Eh1r7fRDImeg6wE}
 springdoc:
   swagger-ui:
     config-url: ${SWAGGER_CONFIG_URL:/cine-project/v3/api-docs/swagger-config}

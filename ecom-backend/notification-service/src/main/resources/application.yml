@@ -1,19 +1,15 @@
 server:
-  port: ${SERVER_PORT:3317}
+  port: 3317
 spring:
   application:
     name: notification-service
   config:
-    import: "optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}"
-  
-
+    import: optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}
   datasource:
-    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DB:notification_service}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://localhost:3306/notification_service?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: ${MYSQL_USERNAME:root}
     password: ${MYSQL_PASSWORD:root}
     driver-class-name: com.mysql.cj.jdbc.Driver
-
-  # Spring Data JPA & Hibernate Settings
   jpa:
     open-in-view: false
     database-platform: org.hibernate.dialect.MySQLDialect
@@ -25,22 +21,21 @@ spring:
         show_sql: true
         format_sql: true
         highlight_sql: true
-        # Connection Pool optimization parameters
         connection:
           autocommit: false
-
   flyway:
     enabled: ${FLYWAY_ENABLED:false}
     baseline-on-migrate: ${FLYWAY_BASELINE_ON_MIGRATE:true}
-
   mail:
-    host: ${SMTP_HOST:}
-    port: ${SMTP_PORT:587}
-    username: ${SMTP_USERNAME:}
-    password: ${SMTP_PASSWORD:}
+    host: smtp.gmail.com
+    port: 587
+    username: pujarikarthikvarma@gmail.com
+    password: tqqwazcljsesfkng
     properties:
-      mail.smtp.auth: ${SMTP_AUTH:true}
-      mail.smtp.starttls.enable: ${SMTP_STARTTLS_ENABLE:true}
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.smtp.starttls.required: true
+      mail.smtp.ssl.enable: false
 org-access:
   service:
     url: ${ORG_ACCESS_SERVICE_URL:http://localhost:3310}
@@ -51,7 +46,7 @@ notification:
 eureka:
   client:
     service-url:
-      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka}
+      defaultZone: http://localhost:8761/eureka
 management:
   endpoints:
     web:
@@ -60,7 +55,6 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
-
 sync:
   service: notification-service
   keys:

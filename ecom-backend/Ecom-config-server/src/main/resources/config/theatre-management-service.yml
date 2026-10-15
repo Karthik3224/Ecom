@@ -18,7 +18,7 @@ spring:
 
 app:
   jwt:
-    secret: "change-this-secret-to-a-long-random-string"
+    secret: "KMFZLQ3X0AEaQBVwFkrssIUJ6XG0pw67QXWxvK_MUppibhcL7Eh1r7fRDImeg6wE"
   clients:
     layout-service:
       base-url: http://layout-service
