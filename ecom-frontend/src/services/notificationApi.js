@@ -1,3 +1,4 @@
+import { serviceBaseUrl } from './apiConfig.js';
 import { apiRequest } from './apiClient';
 
 export const NOTIFICATION_STATUSES = ['PENDING', 'SENT', 'FAILED', 'CANCELLED'];
@@ -14,7 +15,7 @@ export const NOTIFICATION_TYPES = [
   'SHIPMENT_DELIVERED',
 ];
 
-const NOTIFICATION_BASE_URL = (import.meta.env.VITE_NOTIFICATION_URL || '/notification-service').replace(/\/$/, '');
+const NOTIFICATION_BASE_URL = serviceBaseUrl(import.meta.env, 'VITE_NOTIFICATION_URL', '/notification-service');
 
 const request = (path, options = {}) => apiRequest(NOTIFICATION_BASE_URL, path, options);
 

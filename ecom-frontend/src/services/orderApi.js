@@ -1,10 +1,11 @@
+import { serviceBaseUrl } from './apiConfig.js';
 import { apiRequest } from './apiClient';
 import { createOrderAttempt } from '../utils/orderCreationAttempt';
 
 export const ORDER_STATUSES = ['CREATED', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
 export const PAYMENT_STATUSES = ['PENDING', 'SUCCESS', 'PAID', 'FAILED', 'REFUNDED'];
 
-const ORDER_BASE_URL = (import.meta.env.VITE_ORDER_URL || '/order-api').replace(/\/$/, '');
+const ORDER_BASE_URL = serviceBaseUrl(import.meta.env, 'VITE_ORDER_URL', '/order-api');
 
 const request = (path, options = {}) => apiRequest(ORDER_BASE_URL, path, options);
 
@@ -23,6 +24,7 @@ export const getOrder = async (orderId) => request(`/api/v1/orders/${encodeURICo
 
 export const getCheckoutGroup = async (groupId) => request(`/api/v1/checkouts/${encodeURIComponent(groupId)}`);
 export const getCheckoutGroupByKey = async (key) => request(`/api/v1/checkouts/by-key/${encodeURIComponent(key)}`);
+export const getCheckoutGroupByCart = async (cartId) => request(`/api/v1/checkouts/by-cart/${encodeURIComponent(cartId)}`);
 export const retryCheckoutGroup = async (groupId) => request(`/api/v1/checkouts/${encodeURIComponent(groupId)}/retry`, { method: 'POST' });
 export const createCheckoutGroup = async (body, key) => request('/api/v1/checkouts', {
   method: 'POST', body, headers: { 'Idempotency-Key': key },
@@ -46,6 +48,8 @@ export const updateOrderPaymentStatus = async (orderId, paymentStatus) =>
 export const cancelOrder = async (orderId) => request(`/api/v1/orders/${encodeURIComponent(orderId)}/cancel`, { method: 'POST' });
 
 export const getOrderItems = async (orderId) => request(`/api/v1/orders/${encodeURIComponent(orderId)}/items`);
+
+export const reconcileOrderDelivery = async (orderId) => request(`/api/v1/orders/${encodeURIComponent(orderId)}/reconcile-delivery`, { method: 'POST' });
 
 export const getOrderReview = async (orderId) => request(`/api/v1/orders/${encodeURIComponent(orderId)}/review`);
 

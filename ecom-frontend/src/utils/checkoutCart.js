@@ -1,3 +1,4 @@
+import { requestId } from './requestId.js';
 export const prepareCheckoutCart = async (customerId, storeId, items, api, storage = sessionStorage, allowContentChange = false) => {
   const slot = `checkout-cart:${customerId}:${storeId}`;
   const body = JSON.stringify(items);
@@ -21,13 +22,13 @@ export const prepareCheckoutCart = async (customerId, storeId, items, api, stora
     if (!cart.items.every(line => previous.some(item => same(line, item) && line.quantity === item.quantity))) {
       throw new Error('The saved cart changed in another session. Review it before replacing items.');
     }
-    saved = { body, cartId: cart.id, keys: items.map(() => crypto.randomUUID()) };
+    saved = { body, cartId: cart.id, keys: items.map(() => requestId()) };
     storage.setItem(slot, JSON.stringify(saved));
     for (const line of cart.items) {
       if (!items.some(item => same(line, item))) cart = await api.removeCartItem(cart.id, line.id);
     }
   }
-  const plan = saved || { body, cartId: cart.id, keys: items.map(() => crypto.randomUUID()) };
+  const plan = saved || { body, cartId: cart.id, keys: items.map(() => requestId()) };
   storage.setItem(slot, JSON.stringify(plan));
   if (cart.status === 'CHECKED_OUT') return cart;
   if (cart.items.some(line => !items.some(item => same(line, item)))) throw new Error('Your saved cart contains other items. Review it before checkout.');

@@ -18,7 +18,7 @@ import { getPaymentCapabilities } from '../../services/paymentApi';
 import { requirePaymentProcessing } from '../../utils/paymentAvailability';
 import * as cartApi from '../../services/cartApi';
 import { prepareCheckoutCart, finishCheckoutCart } from '../../utils/checkoutCart';
-import { createCheckoutGroup, getCheckoutGroupByKey } from '../../services/orderApi';
+import { createCheckoutGroup, getCheckoutGroupByKey, getCheckoutGroupByCart } from '../../services/orderApi';
 import { persistStoreCheckout } from '../../utils/persistedStoreCheckout';
 import { findInventoryForItem } from '../../services/inventoryApi';
 import { validateCheckoutAvailability } from '../../utils/checkoutAvailability';
@@ -82,13 +82,14 @@ const resolveCheckoutStoreId = ({ activeCart, checkout = {}, cartItems = [] } = 
 const PaymentOptions = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { activeCart, addresses, cartItems, clearCart, formatCurrency, user, catalogStores } = useContext(AppContext);
+  const { activeCart, addresses, cartItems, formatCurrency, user, catalogStores } = useContext(AppContext);
   const customerId = tokenCustomerId() || user?.id || '';
   const checkout = useMemo(() => location.state?.checkout || {}, [location.state]);
   const existingOrderId = location.state?.orderId || location.state?.order?.id || '';
   const existingOrder = useMemo(() => location.state?.order ? normalizeOrder(location.state.order) : null, [location.state]);
-  const [method,setMethod] = useState('cod');
+  const [preferredMethod,setMethod] = useState('cod');
   const [onlinePaymentsEnabled,setOnlinePaymentsEnabled] = useState(false);
+  const method = onlinePaymentsEnabled ? preferredMethod : 'cod';
   const [status,setStatus] = useState('selecting');
   const [summaryOpen,setSummaryOpen] = useState(true);
   const [error,setError] = useState('');
@@ -120,10 +121,6 @@ const PaymentOptions = () => {
     () => onlinePaymentsEnabled ? methods : methods.filter((item) => item.id === 'cod'),
     [onlinePaymentsEnabled],
   );
-
-  useEffect(() => {
-    if (!selectableMethods.some((item) => item.id === method)) setMethod('cod');
-  }, [method, selectableMethods]);
 
   const summary = useMemo(() => {
     const subtotal = cartItems.reduce((sum,item)=>sum+Number(item.price)*Number(item.quantity),0);
@@ -297,46 +294,14 @@ const PaymentOptions = () => {
     if (status === 'submitting' || submissionBusy.current) return;
     if (checkoutBlock) return;
     const selectedPaymentMethod = selectableMethods.find((item) => item.id === method)?.paymentMethod || 'DEMO_COD';
-    if (!existingOrderId && selectedPaymentMethod === 'DEMO_COD') {
+    if (persistedMultiStore && !existingOrderId) {
       const validation = validate();
       if (validation) { setError(validation); setStatus('failed'); return; }
       submissionBusy.current = true;
       setStatus('submitting');
       setError('');
       try {
-        const order = await createOrLoadOrder();
-        const payableAmount = Number(order.totalAmount || order.total || summary.total || 0);
-        if (!order.id || !(payableAmount > 0)) throw new Error('Order Service did not return a valid saved order.');
-        let pendingPayment = null;
-        for (let attempt = 0; attempt < 4 && !pendingPayment; attempt += 1) {
-          try {
-            if (attempt > 0) await new Promise((resolve) => window.setTimeout(resolve, 450));
-            pendingPayment = normalizePayment(await getPaymentByOrder(order.id));
-          } catch {
-            pendingPayment = null;
-          }
-        }
-        if (!existingOrderId) {
-          finishCheckoutCart(customerId, order.storeId);
-          await clearCart();
-        }
-        setResult({ order, payment: pendingPayment || { status: 'PENDING', amount: payableAmount, paymentMethod: selectedPaymentMethod, paymentId: '' } });
-        setStatus('succeeded');
-      } catch (reason) {
-        setError(resolveError(reason));
-        setStatus('failed');
-      } finally {
-        submissionBusy.current = false;
-      }
-      return;
-    }
-    if (persistedMultiStore && multiStoreCart && !existingOrderId) {
-      const validation = validate();
-      if (validation) { setError(validation); setStatus('failed'); return; }
-      submissionBusy.current = true;
-      setStatus('submitting');
-      setError('');
-      try {
+        if (selectedPaymentMethod !== 'DEMO_COD') throw new Error('Online payments are unavailable for combined checkout. Choose cash on delivery.');
         if (summary.discount || checkout.coupon) throw new Error('Promotions must be verified before combined checkout.');
         const address = addresses.find(entry => entry.isDefault) || addresses[0] || {};
         const groups = splitGroupsFor(cartItems, checkout.deliveryLines || []).reduce((stores, group) => {
@@ -359,13 +324,13 @@ const PaymentOptions = () => {
           addresses: buildOrderAddressesPayload(address, checkout.deliveryAddress, { name: user.name, phone: checkout.contactNumber || user.phone || user.mobile }),
           deliveryMethod: group.line.fulfillmentType === 'global' ? 'global' : group.line.selectedDeliveryMethod || group.line.deliveryType || checkout.method || 'standard',
           fulfillmentType: group.line.fulfillmentType === 'global' ? 'global' : group.line.deliveryType === 'pickup' || checkout.method === 'pickup' ? 'pickup' : 'nearby',
-          deliveryCharge: group.line.deliveryType === 'pickup' || checkout.method === 'pickup' ? 0 : Number(group.line.deliveryCharge || 0),
+          deliveryCharge: group.line.deliveryType === 'pickup' || checkout.method === 'pickup' ? 0 : Number(group.line.deliveryCharge ?? (groups.length === 1 ? checkout.deliveryFee : 0) ?? 0),
           customerLatitude: checkout.customerLatitude ?? null,
           customerLongitude: checkout.customerLongitude ?? null,
           scheduledDeliveryDate: checkout.date || null,
           scheduledDeliverySlot: checkout.slot || null,
         }));
-        const group = await persistStoreCheckout({ customerId, stores, cartApi, request: createCheckoutGroup, lookup: getCheckoutGroupByKey, checkInventory: entries => validateCheckoutAvailability(entries, lookupCheckoutInventory) });
+        const group = await persistStoreCheckout({ customerId, stores, cartApi, request: createCheckoutGroup, lookup: getCheckoutGroupByKey, lookupCart: getCheckoutGroupByCart, checkInventory: entries => validateCheckoutAvailability(entries, lookupCheckoutInventory) });
         navigate(`/checkout-group/${encodeURIComponent(group.id)}`);
       } catch (reason) {
         setError(`${resolveError(reason)} Retry checks the existing checkout before submitting again.`);
@@ -375,13 +340,15 @@ const PaymentOptions = () => {
     }
     const validation = validate();
     if (validation) { setError(validation);setStatus('failed');return; }
-      setError('');setStatus('submitting');
+    submissionBusy.current = true;
+    setError('');setStatus('submitting');
     try {
       const paymentMethod = selectedPaymentMethod;
       const isCashOnDelivery = paymentMethod === 'DEMO_COD';
       if (!isCashOnDelivery) {
         await requirePaymentProcessing(getPaymentCapabilities);
       }
+      if (!existingOrderId) await validateCheckoutAvailability([{ storeId: resolveCheckoutStoreId({ activeCart, checkout, cartItems }), items: buildOrderItemsPayload(cartItems) }], lookupCheckoutInventory);
       const order = await createOrLoadOrder();
       if (!order.id) throw new Error('Order Service did not return an order ID.');
       const payableAmount = Number(order.totalAmount || order.total || 0);
@@ -392,7 +359,6 @@ const PaymentOptions = () => {
       if (isCashOnDelivery) {
         if (!existingOrderId) {
           finishCheckoutCart(customerId, order.storeId);
-          await clearCart();
         }
         setResult({ order, payment: { status: 'PENDING', amount: payableAmount, paymentMethod, paymentId: '' } });
         setStatus('succeeded');
@@ -431,7 +397,6 @@ const PaymentOptions = () => {
         }
         if (!existingOrderId) {
           finishCheckoutCart(customerId, order.storeId);
-          await clearCart();
         }
         setResult({ order: paidOrder, payment: latestPayment });
         setStatus('succeeded');
@@ -443,7 +408,7 @@ const PaymentOptions = () => {
     } catch (reason) {
       setError(resolveError(reason));
       setStatus('failed');
-    }
+    } finally { submissionBusy.current = false; }
   };
 
   const activePaymentStatus = payment?.status || (status === 'pending' ? 'PENDING' : status === 'refunded' ? 'REFUNDED' : status === 'failed' && payment?.paymentId ? 'FAILED' : '');
@@ -458,7 +423,7 @@ const PaymentOptions = () => {
         <Box className="method-form"><Typography variant="h6">{selectableMethods.find((item)=>item.id===method)?.label} Payment</Typography><Typography color="text.secondary">Select your preferred payment method to place the order.</Typography><Box className="option-list">{selectableMethods.map((item)=><button type="button" key={item.id} className={method===item.id?'selected':''} onClick={()=>setMethod(item.id)}><span className="option-mark">{item.label.slice(0,2)}</span><span><strong>{item.displayMethod}</strong><small>{item.caption}</small></span><i>{method===item.id?'●':'○'}</i></button>)}</Box></Box>
         {activePaymentStatus&&<Box className="payment-state-note" role="status"><strong>{activePaymentStatus}</strong><span>{paymentStatusText[activePaymentStatus] || 'Payment status received from Payment Service.'}</span>{payment?.paymentId&&<span>Payment ID: {payment.paymentId}</span>}</Box>}
         {checkoutBlock ? <Box className="payment-state-note" role="status"><strong>Checkout unavailable for this cart</strong><span>{checkoutBlock}</span><span>No payment was attempted.</span><Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/cart')}>Edit Cart</Button></Box>
-          : status==='failed'&&<Box className="payment-error" role="alert"><ErrorOutlinedIcon/><Box><strong>{payment?.paymentId ? 'Payment Failed' : 'Checkout Could Not Proceed'}</strong><span>{error || 'Please try again in a moment.'}</span></Box><Button onClick={()=>{if (error.toLowerCase().includes('unresolved checkout')) { Object.keys(sessionStorage).filter((key) => key === 'checkout-group-attempt' || key.startsWith('checkout-cart:')).forEach((key) => sessionStorage.removeItem(key)); } setStatus('selecting');setError('');}}>Start Fresh Checkout</Button></Box>}
+          : status==='failed'&&<Box className="payment-error" role="alert"><ErrorOutlinedIcon/><Box><strong>{payment?.paymentId ? 'Payment Failed' : 'Checkout Could Not Proceed'}</strong><span>{error || 'Please try again in a moment.'}</span></Box><Button onClick={()=>{setStatus('selecting');setError('');}}>Retry Checkout</Button></Box>}
         <Button className="payment-button" variant="contained" disabled={status==='submitting' || Boolean(checkoutBlock)} onClick={()=>pay()}>{status==='submitting'?<><CircularProgress size={19} color="inherit"/>{persistedMultiStore && multiStoreCart ? 'Saving Checkout...' : 'Placing Order...'}</>:`Place Order ${formatCurrency(summary.total)}`}</Button>
       </Box></Box></section>
     </main>

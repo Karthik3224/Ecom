@@ -306,9 +306,9 @@ const AdminWorkspace = () => {
           : localOrders;
         const backendOrders = (await getOrders(user?.role==='store-manager'&&storeId?{storeId}:{})).map((order)=>adminOrder(normalizeOrder(order), stores));
         const backendIds = new Set(backendOrders.map((order)=>order.id));
-        source = [...localScoped, ...backendOrders.filter((order)=>!localScoped.some((item)=>item.id===order.id)), ...source.filter((order)=>!backendIds.has(order.id)&&!localScoped.some((item)=>item.id===order.id))];
+        source = user?.role === 'store-manager' ? backendOrders : [...backendOrders, ...localScoped.filter((order)=>!backendIds.has(order.id))];
       } catch (error) {
-        if (user?.role === 'store-manager') source = localOrders.filter((order)=>orderBelongsToStore(order, storeId, storeName));
+        if (user?.role === 'store-manager') source = [];
         setMessage(error.message);
       }
       if (user?.role === 'store-manager') {

@@ -110,6 +110,22 @@ class CheckoutGroupsTest {
     assertThatThrownBy(() -> groups.getByKey(key)).isInstanceOf(AccessDeniedException.class);
   }
 
+  @Test void cartRecoveryIsReadOnlyOwnerScopedAndKeepsOriginalKey() throws Exception {
+    var cart = UUID.randomUUID();
+    var result = prepare(key, List.of(request("a", cart, owner)));
+    assertThat(groups.getByCart(cart).id()).isEqualTo(result.id());
+    assertThat(groups.getByCart(cart).state()).isEqualTo("PREPARED");
+    assertThat(jdbc.queryForObject("SELECT request_key FROM checkout_groups", String.class)).isEqualTo(key);
+    assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM checkout_audit", Integer.class)).isEqualTo(1);
+    assertThatThrownBy(() -> groups.getByCart(UUID.randomUUID()))
+        .isInstanceOf(com.metaarch.order.exception.ResourceNotFoundException.class);
+    authenticate(UUID.randomUUID());
+    assertThatThrownBy(() -> groups.getByCart(cart))
+        .isInstanceOf(com.metaarch.order.exception.ResourceNotFoundException.class);
+    SecurityContextHolder.clearContext();
+    assertThatThrownBy(() -> groups.getByCart(cart)).isInstanceOf(AccessDeniedException.class);
+  }
+
   @Test void concurrentRetriesReturnOneDurableGroupAfterServiceReconstruction() throws Exception {
     var requests = List.of(request("a", UUID.randomUUID(), owner), request("b", UUID.randomUUID(), owner));
     var executor = java.util.concurrent.Executors.newFixedThreadPool(2);
@@ -144,5 +160,17 @@ class CheckoutGroupsTest {
       assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM " + table, Integer.class)).isZero();
     }
     assertThat(prepare(key, requests).children()).hasSize(1);
+  }
+  @Test void eachStoreCartFindsItsOriginalGroupWithoutCrossStoreMixing() throws Exception {
+    var a=request("arbitrary-store-a",UUID.randomUUID(),owner);
+    var b=request("arbitrary-store-b",UUID.randomUUID(),owner);
+    var c=request("arbitrary-store-c",UUID.randomUUID(),owner);
+    var shared=prepare(key,List.of(a,b));
+    var separate=prepare("checkout-another-key-0002",List.of(c));
+    assertThat(groups.getByCart(a.cartId()).id()).isEqualTo(shared.id());
+    assertThat(groups.getByCart(b.cartId()).id()).isEqualTo(shared.id());
+    assertThat(groups.getByCart(c.cartId()).id()).isEqualTo(separate.id());
+    assertThat(groups.getByCart(c.cartId()).children()).extracting(CheckoutGroups.Child::storeId).containsExactly(c.storeId());
+    assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM checkout_groups",Integer.class)).isEqualTo(2);
   }
 }

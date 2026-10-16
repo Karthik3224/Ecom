@@ -1,3 +1,4 @@
+import NotificationPermission from '../../components/NotificationPermission';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { Box, Button, Chip, LinearProgress, MenuItem, Rating, Select, TextField, Typography } from '@mui/material';
 import PhotoCameraOutlinedIcon from '@mui/icons-material/PhotoCameraOutlined';
@@ -110,7 +111,7 @@ const CustomerFeaturePage = ({ type }) => {
         <Box sx={{ bgcolor: 'white', borderRadius: 3, p: 3, boxShadow: '0 4px 16px rgba(15,23,42,.08)' }}>
           <Typography sx={{ color: '#64748b', mb: 2 }}>{config.empty}</Typography>
 
-          {type === 'notifications' && <Box>{notifications.length === 0 ? <Typography>No notifications.</Typography> : notifications.map((item) => <Box key={item.id} onClick={() => { notificationStore.markRead(item.id); setNotifications(notificationStore.list()); }} sx={{ p:2,mb:1,border:'1px solid #e2e8f0',borderRadius:2,cursor:'pointer',bgcolor:item.read ? '#fff' : '#ecfdf5' }}><Typography fontWeight={700}>{item.title}</Typography><Typography>{item.message}</Typography><Typography variant="caption">{new Date(item.createdAt).toLocaleString()}</Typography></Box>)}{notifications.length > 0 && <Button color="error" onClick={() => { notificationStore.clear(); setNotifications([]); }}>Clear All</Button>}</Box>}
+          {type === 'notifications' && <Box><NotificationPermission />{notifications.length === 0 ? <Typography>No notifications.</Typography> : notifications.map((item) => <Box key={item.id} onClick={() => { notificationStore.markRead(item.id); setNotifications(notificationStore.list()); }} sx={{ p:2,mb:1,border:'1px solid #e2e8f0',borderRadius:2,cursor:'pointer',bgcolor:item.read ? '#fff' : '#ecfdf5' }}><Typography fontWeight={700}>{item.title}</Typography><Typography>{item.message}</Typography><Typography variant="caption">{new Date(item.createdAt).toLocaleString()}</Typography></Box>)}{notifications.length > 0 && <Button color="error" onClick={() => { notificationStore.clear(); setNotifications([]); }}>Clear All</Button>}</Box>}
 
           {type === 'legacy-reviews' && <Box sx={{ display: 'grid', gap: 2 }}>
             <Rating value={rating} onChange={(_, value) => setRating(value || 0)} aria-label="Product rating" />

@@ -1,3 +1,4 @@
+import { requestId } from './requestId.js';
 export const checkoutGroupView = (group) => {
   const children = Array.isArray(group?.children) ? group.children : [];
   const states = ['PREPARED', 'RESERVING', 'COMMITTING', 'COMPENSATING', 'COMPLETED', 'FAILED'];
@@ -63,7 +64,7 @@ export const submitCheckoutGroup = async (stores, request, storage = sessionStor
     }
   }
   if (!attempt || attempt.body !== body) {
-    attempt = { body, key: crypto.randomUUID() };
+    attempt = { body, key: requestId() };
     storage.setItem(name, JSON.stringify(attempt));
   }
   if (attempt.submitted && lookup) {

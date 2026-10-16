@@ -27,7 +27,7 @@ public class StoreDeliveryService {
   @Transactional(readOnly = true)
   public DeliveryZoneLocationResponse getZoneLocation(Long deliveryZoneId) {
     StoreDeliveryZone zone = zones.findById(deliveryZoneId).orElseThrow(() -> new ResourceNotFoundException("Delivery zone not found: " + deliveryZoneId));
-    return DeliveryZoneLocationResponse.from(zone);
+    return new DeliveryZoneLocationResponse(zone.getId(), zone.getStoreId(), resolveZoneLocation(zone));
   }
 
   @Transactional
@@ -35,6 +35,7 @@ public class StoreDeliveryService {
     requireStore(storeId);
     StoreDeliveryZone zone = new StoreDeliveryZone();
     zone.setStoreId(storeId);
+    zone.setLocationId(resolveZoneLocation(zone));
     applyZone(zone, request);
     StoreDeliveryZone saved = zones.save(zone);
     saveMethods(saved, request.methods());
@@ -46,6 +47,7 @@ public class StoreDeliveryService {
     requireStore(storeId);
     StoreDeliveryZone zone = zones.findById(id).filter(item -> item.getStoreId().equals(storeId)).orElseThrow(() -> new ResourceNotFoundException("Delivery zone not found: " + id));
     applyZone(zone, request);
+    zone.setLocationId(resolveZoneLocation(zone));
     methods.deleteByZoneId(zone.getId());
     saveMethods(zone, request.methods());
     return StoreDeliveryZoneResponse.from(zone, methods.findByZoneIdOrderByDeliveryTypeAsc(zone.getId()));
@@ -97,6 +99,23 @@ public class StoreDeliveryService {
     if (freeDeliveryApplied || isPickup(selectedMethod)) charge = BigDecimal.ZERO;
     boolean methodAvailable = selectedMethod == null || selected != null;
     return new DeliveryQuoteResponse(storeId, store.getLatitude(), store.getLongitude(), customerLatitude, customerLongitude, methodAvailable, distance, route.distanceMeters(), route.durationSeconds(), route.durationMinutes(), matchedZoneLabel(zone), route.geometry(), zone.getId(), selectedMethod, charge, zone.getFreeDeliveryAbove(), freeDeliveryApplied, zone.getMinimumOrder(), zone.getEstimatedDeliveryMin(), zone.getEstimatedDeliveryMax(), pickupAvailable, availableMethods, methodAvailable ? "Delivery available" : "Selected delivery method is unavailable for this address");
+  }
+
+  private String resolveZoneLocation(StoreDeliveryZone zone) {
+    if (zone.getLocationId() != null && !zone.getLocationId().isBlank()) return zone.getLocationId().trim();
+    // Inherit IDs from persisted mappings, never from a numeric zone ID or a
+    // customer-supplied label. A conflicting mapping requires explicit repair.
+    List<String> sameStore = zones.findByStoreIdOrderByMinRadiusKmAsc(zone.getStoreId()).stream()
+        .map(StoreDeliveryZone::getLocationId).filter(java.util.Objects::nonNull)
+        .map(String::trim).filter(value -> !value.isBlank()).distinct().toList();
+    if (sameStore.size() == 1) return sameStore.getFirst();
+    if (sameStore.size() > 1) throw new IllegalArgumentException("Store delivery location mappings conflict. Contact the store administrator.");
+    Store store = requireStore(zone.getStoreId());
+    List<String> region = store.getLocation() == null || store.getLocation().isBlank() ? List.of()
+        : zones.findMappedLocationIdsForStoreRegion(store.getLocation().trim()).stream()
+            .filter(java.util.Objects::nonNull).map(String::trim).filter(value -> !value.isBlank()).distinct().toList();
+    if (region.size() == 1) return region.getFirst();
+    throw new IllegalArgumentException("Store delivery location mapping is missing or ambiguous. Configure the store's location before saving delivery radius rules.");
   }
 
   private Store requireStore(String id) {

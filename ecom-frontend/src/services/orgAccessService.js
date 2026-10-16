@@ -1,5 +1,6 @@
+import { serviceBaseUrl } from './apiConfig.js';
 import { apiRequest } from './apiClient';
-const ORG_ACCESS_BASE_URL = (import.meta.env.VITE_ORG_ACCESS_URL || '/org-access').replace(/\/$/, '');
+const ORG_ACCESS_BASE_URL = serviceBaseUrl(import.meta.env, 'VITE_ORG_ACCESS_URL', '/org-access');
 
 const normalizeRole = (role) => {
   if (!role) return null;

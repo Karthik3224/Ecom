@@ -1,10 +1,11 @@
+import { serviceBaseUrl } from './apiConfig.js';
 import { apiRequest } from './apiClient';
 
 export const FULFILLMENT_STATUSES = ['PENDING', 'ALLOCATED', 'PACKING', 'READY_TO_SHIP', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'FAILED'];
 export const FULFILLMENT_TYPES = ['SHIP_TO_HOME', 'STORE_PICKUP', 'DIGITAL'];
 export const SHIPMENT_STATUSES = ['CREATED', 'IN_TRANSIT', 'OUT_FOR_DELIVERY', 'DELIVERED', 'FAILED', 'RETURNED', 'CANCELLED'];
 
-const FULFILLMENT_BASE_URL = (import.meta.env.VITE_FULFILLMENT_URL || '/fulfillment').replace(/\/$/, '');
+const FULFILLMENT_BASE_URL = serviceBaseUrl(import.meta.env, 'VITE_FULFILLMENT_URL', '/fulfillment-service');
 
 const request = (path, options = {}) => apiRequest(FULFILLMENT_BASE_URL, path, options);
 

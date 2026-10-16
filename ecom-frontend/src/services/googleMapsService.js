@@ -1,4 +1,5 @@
-﻿import { reverseGeocodeOpenStreetMap } from './openStreetMapService';
+import { browserLocation } from '../utils/browserLocation.js';
+import { reverseGeocodeOpenStreetMap } from './openStreetMapService';
 
 let googleMapsPromise;
 let authFailureInstalled = false;
@@ -38,14 +39,7 @@ export const loadGoogleMaps = () => {
   return googleMapsPromise;
 };
 
-export const getBrowserLocation = () => new Promise((resolve, reject) => {
-  if (!navigator.geolocation) return reject(new Error('This browser does not support location access.'));
-  navigator.geolocation.getCurrentPosition(
-    ({ coords }) => resolve({ lat: coords.latitude, lng: coords.longitude }),
-    reject,
-    { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 },
-  );
-});
+export const getBrowserLocation = () => browserLocation();
 
 const componentValue = (components, type) => components?.find((item) => item.types?.includes(type))?.long_name || '';
 

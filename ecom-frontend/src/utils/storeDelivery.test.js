@@ -1,4 +1,4 @@
-`import test from 'node:test';
+import test from 'node:test';
 import assert from 'node:assert/strict';
 import { deliveryProducts, isGlobalProduct } from './storeDelivery.js';
 import { balancedStoreProductPreview } from './storeProductListings.js';
@@ -18,4 +18,10 @@ test('global API flag retains India-wide offer beside a local offer', () => {
   const rows = deliveryProducts([product], mappings, stores, { latitude: 17, longitude: 78 });
   assert.deepEqual(rows.map((row) => row.storeId), ['local', 'global-store']);
   assert.equal(rows[1].price, 100);
+});
+
+import { deliverySlotLabel } from './storeDelivery.js';
+test('delivery labels do not invent tomorrow estimates', () => {
+ assert.equal(deliverySlotLabel('Standard Delivery'), 'Standard delivery available');
+ assert.equal(deliverySlotLabel('Scheduled Delivery'), 'Scheduled delivery available');
 });

@@ -10,7 +10,7 @@ const row = { ...identity, availableQuantity: 7, reservedQuantity: 2, status: 'A
 test('inventory routing honors gateway, override, and local proxy', () => {
   assert.equal(inventoryBaseUrl({ VITE_API_BASE_URL: 'http://187.126.118.203:8082/' }), 'http://187.126.118.203:8082/inventory-service');
   assert.equal(inventoryBaseUrl({ VITE_API_BASE_URL: 'https://gateway', VITE_INVENTORY_URL: '/custom/' }), '/custom');
-  assert.equal(inventoryBaseUrl(), '/inventory');
+  assert.equal(inventoryBaseUrl(), '/inventory-service');
 });
 test('available stock uses availableQuantity without subtracting reserved stock again', async () => {
   assert.deepEqual(await loadProductStock(async () => row, identity), { state: 'available', available: 7 });
