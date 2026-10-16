@@ -1,13 +1,14 @@
 import DeliveryPartners from './DeliveryPartners';
+import { useManagerOrders } from '../../hooks/useManagerOrders';
 import { storeManagerNavItems as navItems } from '../../config/storeManagerNavigation';
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { Alert, Avatar, Box, Button, Chip, MenuItem, Select, TextField, Typography } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
 import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../../context/AppContext';
 import { clearDeliveryQuoteCache, createStore, createStoreDeliveryZone, deleteStoreDeliveryZone, getStore, getStoreDeliveryZones, getStores, updateStore, updateStoreDeliveryZone } from '../../services/catalogApi';
-import { collectionStore, orderStore, staffProfileStore } from '../../services/localDataService';
+import { collectionStore, staffProfileStore } from '../../services/localDataService';
 import { DELIVERY_MODE_OPTIONS } from '../../utils/storeDelivery';
 import logo from '../../assets/images/logo.png';
 import SafeProductImage from '../../components/SafeProductImage/SafeProductImage';
@@ -450,9 +451,10 @@ const DeliveryRadiusPage = () => {
 const StoreOrdersPage = () => {
   const { user } = useContext(AppContext);
   const { store } = useAssignedStore(user);
-  const orders = useMemo(() => orderStore.list().filter((order) => order.storeId === store?.id || order.sourceStore === store?.name || order.store === store?.name), [store]);
+  const { orders, error, loading } = useManagerOrders(user?.storeId || store?.id, user?.id);
   return <StoreManagerShell active="orders" store={store}>
     <Box className="sm-page-title"><Box><Typography variant="h4">Store Orders</Typography><Typography>{store?.name || user?.store}</Typography></Box></Box>
+    {error && <Alert severity="error">{error}</Alert>}{loading && <Typography>Loading orders...</Typography>}
     <Box className="sm-orders-list">{orders.length ? orders.map((order) => <Box className="sm-order-card" key={order.id}><Box><Typography fontWeight={900}>{order.orderNumber || order.id}</Typography><Typography>Customer: {order.customer?.name || order.customerName || 'Customer'}</Typography><Typography>Distance: {order.calculatedDistanceKm || order.checkout?.deliveryQuote?.distanceKm || '--'} KM</Typography><Typography>Zone: {order.deliveryZoneLabel || (order.checkout?.deliveryQuote?.deliveryZoneId ? `Zone ${order.checkout.deliveryQuote.deliveryZoneId}` : '--')}</Typography></Box><Box><Typography>Delivery: {order.deliveryMethod || order.checkout?.deliveryQuote?.selectedDeliveryMethod || order.checkout?.method || '--'}</Typography><Typography>ETA: {order.estimatedDeliveryMin && order.estimatedDeliveryMax ? `${order.estimatedDeliveryMin}-${order.estimatedDeliveryMax} min` : '--'}</Typography><Typography>Delivery Charge: {money(order.deliveryCharge || order.checkout?.deliveryFee || 0)}</Typography><Typography>Total: {money(order.totalAmount || order.total || 0)}</Typography></Box><Chip label={order.status}/></Box>) : <Typography color="text.secondary">No orders for this store yet.</Typography>}</Box>
   </StoreManagerShell>;
 };
@@ -460,9 +462,10 @@ const StoreOrdersPage = () => {
 const StoreManagerDashboard = () => {
   const { user } = useContext(AppContext);
   const { store } = useAssignedStore(user);
-  const orders = orderStore.list().filter((order) => order.storeId === store?.id || order.sourceStore === store?.name || order.store === store?.name);
+  const { orders, error, loading } = useManagerOrders(user?.storeId || store?.id, user?.id);
   return <StoreManagerShell active="dashboard" store={store}>
     <Box className="sm-page-title"><Box><Typography variant="h4">Welcome back, {user?.name || 'Store Manager'}</Typography><Typography>{store?.name || user?.store}</Typography></Box></Box>
+    {error && <Alert severity="error">{error}</Alert>}{loading && <Typography>Loading orders...</Typography>}
     <Box className="sm-stat-grid">{[['Orders', orders.length], ['Active Orders', orders.filter((order) => !['DELIVERED', 'Delivered', 'CANCELLED', 'Cancelled'].includes(order.status)).length], ['Revenue', money(orders.reduce((sum, order) => sum + Number(order.totalAmount || order.total || 0), 0))], ['Store Status', store?.status || 'Active']].map(([label, value]) => <Box className="sm-stat" key={label}><Typography>{label}</Typography><Typography variant="h5">{value}</Typography></Box>)}</Box>
     <Box className="sm-actions"><Button variant="contained" onClick={() => window.location.assign('/store-manager/delivery-radius')}>Manage Delivery Radius</Button><Button variant="outlined" onClick={() => window.location.assign('/store-manager/orders')}>View Orders</Button></Box>
   </StoreManagerShell>;

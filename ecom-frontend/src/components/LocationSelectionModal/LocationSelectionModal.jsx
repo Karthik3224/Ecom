@@ -1,11 +1,11 @@
-﻿import { useContext, useEffect, useMemo, useRef, useState } from 'react';
+﻿import { useContext, useMemo, useState } from 'react';
 import { Alert, Box, Button, Dialog, DialogContent, Divider, IconButton, Typography } from '@mui/material';
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
 import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
 import CloseIcon from '@mui/icons-material/Close';
 import { AppContext } from '../../context/AppContext';
 import GoogleLocationPicker from '../GoogleLocationPicker/GoogleLocationPicker';
-import { getCurrentDeliveryLocation } from '../../services/googleMapsService';
+
 import './LocationSelectionModal.css';
 
 const cleanText = (value) => String(value || '').split(',').map((part) => part.trim()).filter((part) => part && !/^(undefined|null)$/i.test(part)).join(', ').replace(/\s+/g, ' ').trim();
@@ -13,11 +13,7 @@ const cleanText = (value) => String(value || '').split(',').map((part) => part.t
 export default function LocationSelectionModal() {
   const { showLocationModal, setShowLocationModal, saveSelectedLocation, isLoggedIn, addresses, orderAddresses, selectedLocation } = useContext(AppContext);
   const [selected, setSelected] = useState(selectedLocation || null);
-  const [permissionPending, setPermissionPending] = useState(false);
   const [error, setError] = useState('');
-  const autoDetectStarted = useRef(false);
-  const manualOpen = showLocationModal && sessionStorage.getItem('locationPickerManualOpen') === 'true';
-  const initialPermissionOpen = showLocationModal && !manualOpen && !selectedLocation && !selected;
 
   const savedOptions = useMemo(() => {
     const seen = new Set();
@@ -33,17 +29,7 @@ export default function LocationSelectionModal() {
     }, []).slice(0, 5);
   }, [addresses, orderAddresses]);
 
-  useEffect(() => {
-    if (!showLocationModal || manualOpen || selectedLocation || autoDetectStarted.current) return;
-    autoDetectStarted.current = true;
-    setPermissionPending(true);
-    getCurrentDeliveryLocation()
-      .then(setSelected)
-      .catch((reason) => setError(reason?.code === 1 ? 'Location permission was blocked. Search for an address or choose a point on the map.' : reason?.code === 3 ? 'Location request timed out. Search manually or try current location again.' : reason.message || 'Current location is unavailable.'))
-      .finally(() => setPermissionPending(false));
-  }, [showLocationModal, manualOpen, selectedLocation]);
-
-  const close = () => { sessionStorage.removeItem('locationPickerManualOpen'); autoDetectStarted.current = false; setSelected(selectedLocation || null); setError(''); setShowLocationModal(false); };
+  const close = () => { sessionStorage.removeItem('locationPickerManualOpen'); setSelected(selectedLocation || null); setError(''); setShowLocationModal(false); };
   const save = (place) => {
     try {
       sessionStorage.removeItem('locationPickerManualOpen');
@@ -51,7 +37,7 @@ export default function LocationSelectionModal() {
     } catch (reason) { setError(reason.message || 'Your browser could not save this location.'); }
   };
 
-  if (initialPermissionOpen && permissionPending) return null;
+
 
   return <Dialog open={showLocationModal} onClose={close} aria-labelledby="choose-location-title" className="choose-location-dialog" fullWidth maxWidth="md">
     <DialogContent>

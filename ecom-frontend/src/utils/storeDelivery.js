@@ -38,9 +38,9 @@ export const deliverySlotLabel = (method = '') => {
   const id = deliveryMethodId(method);
   if (id === 'instant') return 'Instant delivery available';
   if (id === 'express') return 'Express delivery available';
-  if (id === 'scheduled') return 'Tomorrow delivery available';
+  if (id === 'scheduled') return 'Scheduled delivery available';
   if (id === 'pickup') return 'Store pickup available';
-  return 'Tomorrow delivery available';
+  return 'Standard delivery available';
 };
 
 export const deliverySummary = (store = {}, formatCurrency = (value) => `Rs. ${Number(value || 0).toLocaleString('en-IN')}`) => {

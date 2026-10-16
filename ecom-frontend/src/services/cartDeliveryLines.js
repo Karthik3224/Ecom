@@ -2,7 +2,7 @@ export { totalDeliveryCharge } from '../utils/deliveryCharges.js';
 import { getCachedStoreDeliveryQuote, getStoreDeliveryQuote, getStores } from './catalogApi';
 import { resolveProductStore } from './productStoreResolver';
 import { pickupDeliveryLine, storeFulfillmentMethod } from '../utils/storeFulfillment.js';
-import { deliveryMethodId, deliverySlotLabel, isGlobalProduct, isGlobalStore, parseDeliveryModes, preferredDeliveryMethod, sortDeliveryMethods } from '../utils/storeDelivery';
+import { deliveryMethodId, deliverySlotLabel, isGlobalProduct, isGlobalStore, preferredDeliveryMethod, sortDeliveryMethods } from '../utils/storeDelivery';
 
 const lineKey = (item = {}) => `${item.storeId || item.sourceStoreId || item.store || item.storeName || 'store'}:${item.productId || item.id || ''}:${item.variantId ?? 'product'}`;
 
@@ -34,7 +34,7 @@ const globalLine = (item, source = {}, quote = null) => ({
 });
 
 const localLine = (item, source, quote, method) => {
-  const selected = sortDeliveryMethods(quote?.methods || []).find((entry) => entry.deliveryType === method) || {};
+  const selected = sortDeliveryMethods(quote?.methods || []).find((entry) => entry.enabled !== false && deliveryMethodId(entry.deliveryType) === deliveryMethodId(method)) || {};
   const charge = Number(quote?.deliveryCharge ?? selected.deliveryCharge ?? 0);
   const eta = selected.estimatedTime || (quote?.estimatedDeliveryMin && quote?.estimatedDeliveryMax ? `${quote.estimatedDeliveryMin}-${quote.estimatedDeliveryMax} min` : '');
   return {
@@ -49,29 +49,11 @@ const localLine = (item, source, quote, method) => {
     sourceLocation: source.location || '',
     deliveryType: deliveryMethodId(method),
     deliveryLabel: deliverySlotLabel(method),
-    estimatedDelivery: eta || 'Tomorrow',
+    estimatedDelivery: quote?.deliveryAvailable === false ? 'Delivery unavailable' : eta || 'Estimate unavailable',
     deliveryCharge: charge,
     fulfillmentType: 'nearby',
     globalApproval: 'Not Required',
     quote,
-  };
-};
-
-const storeFallbackQuote = (store = {}) => {
-  const eta = Number(store.deliveryEtaMinutes || 0);
-  const methods = parseDeliveryModes(store.deliveryModes).map((deliveryType) => ({
-    deliveryType,
-    enabled:true,
-    deliveryCharge:Number(store.deliveryCharge || 0),
-    estimatedTime:eta > 0 ? `${eta} min` : '',
-  }));
-  return {
-    storeId:store.id,
-    deliveryAvailable:true,
-    deliveryCharge:Number(store.deliveryCharge || 0),
-    estimatedDeliveryMin:eta || null,
-    estimatedDeliveryMax:eta || null,
-    methods,
   };
 };
 
@@ -86,10 +68,10 @@ export const buildCartDeliveryLines = async ({ cartItems = [], catalogProducts =
       if (store && !isGlobalStore(store)) {
         const storeSource = { ...source, storeId:store.id, store:store.name, storeName:store.name, location:store.location };
         if (storeFulfillmentMethod(store, storeMethods, defaultMethod) === 'pickup') return pickupDeliveryLine(localLine(item, storeSource, null, 'pickup'));
-        const quote = storeFallbackQuote(store);
-        return localLine(item, storeSource, quote, preferredDeliveryMethod(quote) || defaultMethod);
+        return { ...localLine(item, storeSource, null, defaultMethod), quoteUnavailable: true, estimatedDelivery: 'Select a delivery address' };
       }
-      return globalLine(item, source);
+      if (isGlobalStore(store)) return globalLine(item, source);
+      throw new Error('Store delivery details could not be verified. Please retry.');
     });
   }
   const selectedStore = stores.find((entry) => entry.id === selectedStoreId);
@@ -100,7 +82,7 @@ export const buildCartDeliveryLines = async ({ cartItems = [], catalogProducts =
     const catalogProduct = catalogProducts.find((product) => matchesProduct(item, product));
     if (isGlobalStore(store)) return globalLine(item, storeSource);
     if (!store && (isGlobalProduct(item) || isGlobalProduct(catalogProduct))) return globalLine(item, storeSource);
-    if (!storeSource.storeId || !store) return globalLine(item, storeSource);
+    if (!storeSource.storeId || !store) throw new Error('Store delivery details could not be verified. Please retry.');
     const requestedStoreMethod = storeFulfillmentMethod(store, storeMethods, defaultMethod);
     if (requestedStoreMethod === 'pickup') return pickupDeliveryLine(localLine(item, storeSource, null, 'pickup'));
     try {

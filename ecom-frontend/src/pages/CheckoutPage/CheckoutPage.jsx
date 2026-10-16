@@ -168,7 +168,7 @@ const CheckoutPage = () => {
   }, []);
   const selectedQuoteMethod = quote?.methods?.find((item) => deliveryMethodId(item.deliveryType) === activeMethod);
   const quoteEta = selectedQuoteMethod?.estimatedTime || (quote?.estimatedDeliveryMin && quote?.estimatedDeliveryMax ? `${quote.estimatedDeliveryMin}-${quote.estimatedDeliveryMax} minutes` : '');
-  const deliveryWindow = quoteEta || selectedQuoteMethod?.estimatedTime || '55-62 min';
+  const deliveryWindow = deliveryGroups.length > 1 ? 'See estimates for each store above' : deliveryLines[0]?.estimatedDelivery || quoteEta || 'Estimate unavailable';
   const availableQuoteMethod = (quote?.methods || []).some((item) => deliveryMethodId(item.deliveryType) === activeMethod);
   const selectedMethodUnavailable = quote?.deliveryAvailable === false && quote?.deliveryZoneId && quote?.methods?.length && !availableQuoteMethod;
   const availableMethods = useMemo(() => {
