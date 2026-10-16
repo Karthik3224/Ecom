@@ -1,10 +1,11 @@
+import { serviceBaseUrl } from './apiConfig.js';
 import { apiRequest } from './apiClient';
 import { createOrderAttempt } from '../utils/orderCreationAttempt';
 
 export const ORDER_STATUSES = ['CREATED', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
 export const PAYMENT_STATUSES = ['PENDING', 'SUCCESS', 'PAID', 'FAILED', 'REFUNDED'];
 
-const ORDER_BASE_URL = (import.meta.env.VITE_ORDER_URL || '/order-api').replace(/\/$/, '');
+const ORDER_BASE_URL = serviceBaseUrl(import.meta.env, 'VITE_ORDER_URL', '/order-api');
 
 const request = (path, options = {}) => apiRequest(ORDER_BASE_URL, path, options);
 

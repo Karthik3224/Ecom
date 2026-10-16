@@ -1,7 +1,8 @@
+import { serviceBaseUrl } from './apiConfig.js';
 import { requestId } from '../utils/requestId.js';
 import { apiRequest } from './apiClient';
 
-const CART_BASE_URL = (import.meta.env.VITE_CART_URL || '/cart-api').replace(/\/$/, '');
+const CART_BASE_URL = serviceBaseUrl(import.meta.env, 'VITE_CART_URL', '/cart-api');
 
 const buildQueryString = (params = {}) => {
   const search = new URLSearchParams();

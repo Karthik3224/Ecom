@@ -11,25 +11,33 @@ export const persistStoreCheckout = async ({ customerId, stores, cartApi, reques
     if (!store.storeId || store.customerId !== customerId || seen.has(store.storeId) || !store.items?.length) throw new Error('Invalid store checkout ownership or items.');
     seen.add(store.storeId);
   }
-  // Lost browser retry keys must not create a second checkout for a saved cart.
+  // Recover saved work before posting a new key for an already claimed cart.
+  const findSavedCheckout = async (body) => {
+    if (!lookupCart) return null;
+    for (const store of JSON.parse(body).stores) {
+      let saved;
+      try { saved = await lookupCart(store.cartId); }
+      catch (error) {
+        if (Number(error.status) === 404) continue;
+        throw error;
+      }
+      if (!saved?.id || saved.customerId !== customerId || !saved.children?.some(child =>
+        child.cartId === store.cartId && child.storeId === store.storeId)) {
+        throw new Error('Checkout Service did not return an owned checkout for this cart.');
+      }
+      return saved;
+    }
+    return null;
+  };
   const submitOrRecover = async (body, key) => {
+    const existing = await findSavedCheckout(body);
+    if (existing) return existing;
     try { return await request(body, key); }
     catch (reason) {
       if (Number(reason.status) !== 409 || !lookupCart) throw reason;
-      const original = JSON.parse(body).stores;
-      for (const store of original) {
-        let saved;
-        try { saved = await lookupCart(store.cartId); }
-        catch (lookupError) {
-          if (Number(lookupError.status) === 404) continue;
-          throw lookupError;
-        }
-        if (!saved?.id || saved.customerId !== customerId || !saved.children?.some(child =>
-          child.cartId === store.cartId && child.storeId === store.storeId)) {
-          throw new Error('Checkout Service did not return an owned checkout for this cart.', { cause: reason });
-        }
-        return saved;
-      }
+      // Another tab may have submitted after our read. Preserve its checkout.
+      const saved = await findSavedCheckout(body);
+      if (saved) return saved;
       throw reason;
     }
   };

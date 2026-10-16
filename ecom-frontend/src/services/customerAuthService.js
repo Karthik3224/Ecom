@@ -1,5 +1,6 @@
+import { serviceBaseUrl } from './apiConfig.js';
 import { apiRequest } from './apiClient';
-const base = (import.meta.env.VITE_ORG_ACCESS_URL || '/org-access').replace(/\/$/, '');
+const base = serviceBaseUrl(import.meta.env, 'VITE_ORG_ACCESS_URL', '/org-access');
 const post = async (path, body) => {
   try { return await apiRequest(base, `/api/auth/customer/${path}`, { method: 'POST', auth: false, body: JSON.stringify(body), signal: AbortSignal.timeout(20000) }); }
   catch (error) { if (error.name === 'TimeoutError') throw new Error('The server is taking too long. Please retry. If a code arrived, request a new code before verifying.', { cause: error }); throw error; }

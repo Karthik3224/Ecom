@@ -143,7 +143,7 @@ test('failed original-request replay retains all retry metadata', async () => {
 });
 
 
-test('cart conflict reopens owned original checkout when local retry identity was lost', async () => {
+test('saved checkout is recovered before a conflicting POST when local retry identity was lost', async () => {
   const input = fixture();
   const group = { id: 'original', customerId: 'owner', state: 'PREPARED',
     children: [{ storeId: 'a', cartId: 'cart-a', state: 'PREPARED' }] };
@@ -155,7 +155,7 @@ test('cart conflict reopens owned original checkout when local retry identity wa
   assert.equal(await persistStoreCheckout({ ...input, request, lookupCart,
     lookup: async () => { throw Object.assign(new Error('Not found'), { status: 404 }); } }), group);
   assert.equal(input.storage.getItem('checkout-group-attempt'), original);
-  assert.equal(writes, 2);
+  assert.equal(writes, 0);
 });
 
 test('cart conflict recovery rejects foreign or mismatched groups and retains retry data', async () => {
@@ -197,7 +197,30 @@ test('recovery checks every store cart and preserves the original group rather t
   });
   assert.equal(result, group);
   assert.deepEqual(lookedUp, ['cart-a', 'cart-b']);
-  assert.equal(writes, 1);
+  assert.equal(writes, 0);
   assert.equal(result.children.length, 1);
   assert.ok(input.storage.getItem('checkout-group-attempt'));
+});
+
+test('a checkout created between preflight and POST is recovered after conflict', async () => {
+  const input = fixture();
+  const group = { id: 'racing-group', customerId: 'owner', state: 'RESERVING',
+    children: [{ storeId: 'a', cartId: 'cart-a' }] };
+  let posted = false;
+  const result = await persistStoreCheckout({ ...input,
+    lookupCart: async () => {
+      if (!posted) throw Object.assign(new Error('Not found'), { status: 404 });
+      return group;
+    },
+    request: async () => { posted = true; throw Object.assign(new Error('Conflict'), { status: 409 }); },
+  });
+  assert.equal(result, group);
+});
+
+test('unavailable saved-checkout lookup prevents a potentially duplicate POST', async () => {
+  const input = fixture();
+  await assert.rejects(persistStoreCheckout({ ...input,
+    lookupCart: async () => { throw Object.assign(new Error('Checkout lookup unavailable'), { status: 503 }); },
+    request: async () => assert.fail('Do not submit while checkout ownership is unknown'),
+  }), /lookup unavailable/);
 });

@@ -481,10 +481,10 @@ function Assert-SyncSchemas {
 
 function Wait-ServiceHealth {
     param([string]$Name)
-    $deadline = (Get-Date).AddSeconds(120)
+    $deadline = (Get-Date).AddSeconds(300)
     do {
         try {
-            $health = Invoke-RestMethod "http://127.0.0.1:$($servicePorts[$Name])/actuator/health" -TimeoutSec 3
+            $health = Invoke-RestMethod "http://127.0.0.1:$($servicePorts[$Name])/actuator/health" -TimeoutSec 15
             if ($health.status -eq 'UP') { Write-Host "Healthy: $Name"; return }
         } catch { }
         Start-Sleep -Seconds 2
