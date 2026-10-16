@@ -126,6 +126,32 @@ public class OrderService {
     events.publish(OrderEventType.ORDER_STATUS_UPDATED, order);
   }
 
+  @Transactional
+  public void applyVerifiedDelivery(FulfillmentEvent event) {
+    if (!"SHIPMENT_DELIVERED".equals(event.eventType()) || !"DELIVERED".equals(event.shipmentStatus())
+        || !"DELIVERED".equals(event.fulfillmentStatus()) || event.eventId() == null
+        || event.orderId() == null || event.fulfillmentId() == null || event.shipmentId() == null
+        || event.occurredAt() == null) {
+      throw new InvalidOrderStateException("Delivery confirmation is incomplete");
+    }
+    applyVerifiedShipmentDelivery(new FulfillmentDeliveryClient.DeliveryEvidence(event.orderId(), event.customerId(), event.storeId(), event.fulfillmentId(), event.shipmentId(), event.occurredAt()));
+  }
+  @Transactional
+  public void applyVerifiedShipmentDelivery(FulfillmentDeliveryClient.DeliveryEvidence evidence) {
+    if (evidence.orderId() == null || evidence.fulfillmentId() == null || evidence.shipmentId() == null || evidence.deliveredAt() == null)
+      throw new InvalidOrderStateException("Delivery confirmation is incomplete");
+    Order order = orders.findLockedById(evidence.orderId()).orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+    if (evidence.customerId() == null || !evidence.customerId().equals(order.getCustomerId()) || evidence.storeId() == null || !evidence.storeId().equals(order.getStoreId()))
+      throw new InvalidOrderStateException("Delivery confirmation does not match order");
+    if (order.getStatus() == OrderStatus.CANCELLED)
+      throw new InvalidOrderStateException("Cancelled orders cannot be marked delivered");
+    if (order.getStatus() == OrderStatus.DELIVERED) return;
+    // Authenticated fulfillment delivery is authoritative even if intermediate
+    // order status updates were missed. Payment status is intentionally untouched.
+    order.setStatus(OrderStatus.DELIVERED);
+    events.publish(OrderEventType.ORDER_STATUS_UPDATED, order);
+  }
+
   @Transactional(readOnly = true)
   public List<OrderItemResponse> getItems(UUID orderId) {
     if (!orders.existsById(orderId)) throw new ResourceNotFoundException("Order not found: " + orderId);

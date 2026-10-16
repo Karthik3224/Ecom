@@ -23,11 +23,13 @@ import static org.assertj.core.api.Assertions.*;
   "spring.jpa.hibernate.ddl-auto=create-drop", "spring.flyway.enabled=false",
   "spring.sql.init.mode=always", "spring.sql.init.schema-locations=classpath:sync-schema.sql",
   "sync.dispatch-enabled=false", "sync.keys.payment-service=test-payment-key-at-least-32-characters",
+  "sync.keys.fulfillment-service=test-fulfillment-key-at-least-32-characters",
   "sync.service=order-service", "sync.routes.order=payment-service,fulfillment-service,notification-service",
   "sync.targets.payment-service=http://127.0.0.1:1", "sync.targets.fulfillment-service=http://127.0.0.1:1", "sync.targets.notification-service=http://127.0.0.1:1"
 })
 class PaymentHttpIntegrationTest {
   @org.springframework.boot.test.mock.mockito.MockBean org.springframework.security.oauth2.jwt.JwtDecoder decoder;
+  @org.springframework.boot.test.mock.mockito.MockBean FulfillmentDeliveryClient deliveryClient;
   @Autowired OrderRepository orders;
   @Autowired TestRestTemplate http;
   @Autowired ObjectMapper mapper;
@@ -56,7 +58,7 @@ class PaymentHttpIntegrationTest {
   }
 
   @org.junit.jupiter.api.BeforeEach void prepareCreationSchema() {
-    org.mockito.Mockito.reset(decoder);
+    org.mockito.Mockito.reset(decoder, deliveryClient);
     org.mockito.Mockito.when(decoder.decode(org.mockito.ArgumentMatchers.anyString())).thenAnswer(call ->
       org.springframework.security.oauth2.jwt.Jwt.withTokenValue(call.getArgument(0)).header("alg", "HS256")
         .subject("test-owner").claim("customerId", call.getArgument(0).toString())
@@ -273,5 +275,63 @@ class PaymentHttpIntegrationTest {
     assertThat(http.exchange("/api/v1/orders", HttpMethod.GET, new HttpEntity<>(headers), String.class).getStatusCode()).isEqualTo(HttpStatus.OK);
     assertThat(http.exchange(path + "/status", HttpMethod.PATCH, new HttpEntity<>("{\"status\":\"CONFIRMED\"}", headers), String.class).getStatusCode()).isEqualTo(HttpStatus.OK);
     assertThat(http.exchange(path + "/payment-status", HttpMethod.PATCH, new HttpEntity<>("{\"paymentStatus\":\"SUCCESS\"}", headers), String.class).getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+  }
+
+  private ResponseEntity<String> deliver(Order order, UUID eventId, String signingSource, String storeId) throws Exception {
+    var event = new FulfillmentEvent(eventId, "SHIPMENT_DELIVERED", UUID.randomUUID(), order.getId(),
+        order.getCustomerId(), storeId, "DELIVERED", UUID.randomUUID(), "DELIVERED", Instant.now());
+    byte[] body = mapper.writeValueAsBytes(new SyncEnvelope(eventId, signingSource, "fulfillment", order.getId().toString(), mapper.valueToTree(event)));
+    var headers = new HttpHeaders();headers.setContentType(MediaType.APPLICATION_JSON);
+    String timestamp = Long.toString(Instant.now().getEpochSecond());
+    headers.set("X-Sync-Source", signingSource);headers.set("X-Sync-Time", timestamp);
+    headers.set("X-Sync-Signature", authentication.sign(signingSource, timestamp, body));
+    return http.postForEntity("/internal/events", new HttpEntity<>(body, headers), String.class);
+  }
+  @Test void authenticatedDeliveryPersistsAndRetainsCustomerOwnership() throws Exception {
+    Order order = orders.saveAndFlush(new Order(UUID.randomUUID(), UUID.randomUUID(), "test-store", UUID.randomUUID().toString()));
+    assertThat(deliver(order, UUID.randomUUID(), "fulfillment-service", "test-store").getStatusCode().is2xxSuccessful()).isTrue();
+    assertThat(orders.findById(order.getId()).orElseThrow().getStatus()).isEqualTo(OrderStatus.DELIVERED);
+    assertThat(orders.findById(order.getId()).orElseThrow().getPaymentStatus()).isEqualTo(PaymentStatus.PENDING);
+    int count = jdbc.queryForObject("SELECT COUNT(*) FROM sync_outbox", Integer.class);
+    assertThat(deliver(order, UUID.randomUUID(), "fulfillment-service", "test-store").getStatusCode().is2xxSuccessful()).isTrue();
+    assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM sync_outbox", Integer.class)).isEqualTo(count);
+    var headers = new HttpHeaders();headers.setBearerAuth(order.getCustomerId().toString());
+    String path = "/api/v1/orders/" + order.getId();
+    assertThat(http.exchange(path, HttpMethod.GET, new HttpEntity<>(headers), String.class).getBody()).contains("DELIVERED");
+    headers.setBearerAuth(UUID.randomUUID().toString());
+    assertThat(http.exchange(path + "/review", HttpMethod.GET, new HttpEntity<>(headers), String.class).getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+  }
+  @Test void wrongEventSourceOrStoreCannotMarkDelivered() throws Exception {
+    Order order = orders.saveAndFlush(new Order(UUID.randomUUID(), UUID.randomUUID(), "test-store", UUID.randomUUID().toString()));
+    assertThat(deliver(order, UUID.randomUUID(), "payment-service", "test-store").getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    assertThat(deliver(order, UUID.randomUUID(), "fulfillment-service", "other-store").getStatusCode().is2xxSuccessful()).isFalse();
+    assertThat(orders.findById(order.getId()).orElseThrow().getStatus()).isEqualTo(OrderStatus.CREATED);
+    assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM sync_inbox", Integer.class)).isZero();
+  }
+
+  @Test void legacyReconciliationRequiresOwnerAndVerifiedEvidenceAndKeepsPaymentPending() {
+    var customer = UUID.randomUUID();
+    var order = orders.saveAndFlush(new Order(customer, UUID.randomUUID(), "test-store", UUID.randomUUID().toString()));
+    var evidence = new FulfillmentDeliveryClient.DeliveryEvidence(order.getId(), customer, "test-store", UUID.randomUUID(), UUID.randomUUID(), Instant.now());
+    org.mockito.Mockito.when(deliveryClient.verify(order.getId(), "Bearer " + customer)).thenReturn(java.util.Optional.of(evidence));
+    String path = "/api/v1/orders/" + order.getId() + "/reconcile-delivery";
+    assertThat(http.postForEntity(path, null, String.class).getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    var headers = new HttpHeaders();headers.setBearerAuth(UUID.randomUUID().toString());
+    assertThat(http.postForEntity(path, new HttpEntity<>(headers), String.class).getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    org.mockito.Mockito.verifyNoInteractions(deliveryClient);
+    headers.setBearerAuth(customer.toString());
+    var response = http.postForEntity(path, new HttpEntity<>(headers), OrderResponse.class);
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(response.getBody().status()).isEqualTo(OrderStatus.DELIVERED);
+    assertThat(response.getBody().paymentStatus()).isEqualTo(PaymentStatus.PENDING);
+  }
+  @Test void reconciliationDoesNotTrustMismatchedCustomerEvidence() {
+    var customer = UUID.randomUUID();
+    var order = orders.saveAndFlush(new Order(customer, UUID.randomUUID(), "test-store", UUID.randomUUID().toString()));
+    var evidence = new FulfillmentDeliveryClient.DeliveryEvidence(order.getId(), UUID.randomUUID(), "test-store", UUID.randomUUID(), UUID.randomUUID(), Instant.now());
+    org.mockito.Mockito.when(deliveryClient.verify(order.getId(), "Bearer " + customer)).thenReturn(java.util.Optional.of(evidence));
+    var headers = new HttpHeaders();headers.setBearerAuth(customer.toString());
+    assertThat(http.postForEntity("/api/v1/orders/" + order.getId() + "/reconcile-delivery", new HttpEntity<>(headers), String.class).getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+    assertThat(orders.findById(order.getId()).orElseThrow().getStatus()).isEqualTo(OrderStatus.CREATED);
   }
 }

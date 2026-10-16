@@ -47,6 +47,8 @@ export const cancelOrder = async (orderId) => request(`/api/v1/orders/${encodeUR
 
 export const getOrderItems = async (orderId) => request(`/api/v1/orders/${encodeURIComponent(orderId)}/items`);
 
+export const reconcileOrderDelivery = async (orderId) => request(`/api/v1/orders/${encodeURIComponent(orderId)}/reconcile-delivery`, { method: 'POST' });
+
 export const getOrderReview = async (orderId) => request(`/api/v1/orders/${encodeURIComponent(orderId)}/review`);
 
 export const saveOrderReview = async (orderId, review) =>
