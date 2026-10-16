@@ -55,7 +55,9 @@ public class OutboxDispatcher {
       long delay = Math.min(300000L, 1000L << Math.min(attempt, 18));
       jdbc.update("UPDATE sync_outbox SET state=?,attempts=?,next_attempt=?,lease_token=NULL,lease_until=NULL,last_error=? WHERE id=? AND lease_token=?",
         state, attempt, clock.millis() + delay, ex.getClass().getSimpleName(), id, lease);
-      LoggerFactory.getLogger(getClass()).warn("Sync delivery id={} attempt={} state={}", id, attempt, state);
+      LoggerFactory.getLogger(getClass()).warn(
+        "Sync delivery id={} target={} attempt={} state={} error={}",
+        id, row.get("target"), attempt, state, ex.toString());
     }
   }
 }

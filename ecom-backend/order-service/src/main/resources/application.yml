@@ -67,3 +67,7 @@ sync:
   routes:
     order: payment-service,fulfillment-service,notification-service
     checkout-reservation: inventory-service
+
+checkout:
+  multi-store:
+    enabled: true
