@@ -25,4 +25,28 @@ class StoreDeliveryMappingIntegrationTest {
     service.updateZone(target.getId(),legacyId,request());entities.flush();entities.clear();
     assertThat(zones.findById(legacyId).orElseThrow().getLocationId()).isEqualTo("hyderabad");
   }
+  @Test void everyStoreResolvesOnlyItsOwnRegionAcrossCreateReadAndEdit(){
+    String prefix=UUID.randomUUID().toString();
+    for(String region:List.of("Hyderabad","Chennai","Bengaluru")){
+      String city=prefix+region;
+      String location=prefix+"-"+region.toLowerCase(Locale.ROOT);
+      zone(store(city),location);
+      for(int index=0;index<2;index++){
+        var target=store(" "+city.toUpperCase(Locale.ROOT)+" ");
+        var legacy=zone(target,null);Long legacyId=legacy.getId();entities.clear();
+        assertThat(service.getZoneLocation(legacyId).locationId()).isEqualTo(location);
+        assertThat(zones.findById(legacyId).orElseThrow().getLocationId()).isNull();
+        var created=service.createZone(target.getId(),request());
+        service.updateZone(target.getId(),legacyId,request());entities.flush();entities.clear();
+        assertThat(zones.findById(created.id()).orElseThrow().getLocationId()).isEqualTo(location);
+        assertThat(zones.findById(legacyId).orElseThrow().getLocationId()).isEqualTo(location);
+      }
+    }
+  }
+  @Test void unrelatedRegionCannotSupplyMissingStoreMapping(){
+    String prefix=UUID.randomUUID().toString();zone(store(prefix+"Hyderabad"),prefix+"-hyderabad");
+    var target=store(prefix+"Unconfigured");var legacy=zone(target,null);
+    assertThatThrownBy(()->service.getZoneLocation(legacy.getId())).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("missing or ambiguous");
+    assertThatThrownBy(()->service.createZone(target.getId(),request())).isInstanceOf(IllegalArgumentException.class);
+  }
 }

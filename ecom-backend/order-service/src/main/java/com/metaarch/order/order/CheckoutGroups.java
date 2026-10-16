@@ -87,6 +87,15 @@ public class CheckoutGroups {
   }
 
   @Transactional(readOnly = true)
+  public Result getByCart(UUID cartId) {
+    UUID owner = authenticatedCustomer();
+    var ids = jdbc.queryForList("SELECT g.id FROM checkout_groups g JOIN checkout_children c ON c.checkout_id=g.id WHERE g.customer_id=? AND c.cart_id=?",
+        String.class, owner.toString(), cartId.toString());
+    if (ids.isEmpty()) throw new com.metaarch.order.exception.ResourceNotFoundException("Checkout attempt not found");
+    return get(UUID.fromString(ids.getFirst()));
+  }
+
+  @Transactional(readOnly = true)
   public Result get(UUID id) {
     UUID owner = authenticatedCustomer();
     var rows = jdbc.queryForList("SELECT customer_id,state,aggregate_total FROM checkout_groups WHERE id=? AND customer_id=?", id.toString(), owner.toString());

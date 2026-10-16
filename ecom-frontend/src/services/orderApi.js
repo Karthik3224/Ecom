@@ -23,6 +23,7 @@ export const getOrder = async (orderId) => request(`/api/v1/orders/${encodeURICo
 
 export const getCheckoutGroup = async (groupId) => request(`/api/v1/checkouts/${encodeURIComponent(groupId)}`);
 export const getCheckoutGroupByKey = async (key) => request(`/api/v1/checkouts/by-key/${encodeURIComponent(key)}`);
+export const getCheckoutGroupByCart = async (cartId) => request(`/api/v1/checkouts/by-cart/${encodeURIComponent(cartId)}`);
 export const retryCheckoutGroup = async (groupId) => request(`/api/v1/checkouts/${encodeURIComponent(groupId)}/retry`, { method: 'POST' });
 export const createCheckoutGroup = async (body, key) => request('/api/v1/checkouts', {
   method: 'POST', body, headers: { 'Idempotency-Key': key },

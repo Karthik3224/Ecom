@@ -167,6 +167,11 @@ class CheckoutCoordinatorTest {
     for(String token:List.of("invalid","expired")) mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(lookup).header("Authorization","Bearer "+token)).andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isUnauthorized());
     mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(lookup).header("Authorization","Bearer stranger")).andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isNotFound());
     mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(lookup).header("Authorization","Bearer owner")).andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk());
+    String cartLookup="/api/v1/checkouts/by-cart/"+requests.getFirst().cartId();
+    mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(cartLookup)).andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isUnauthorized());
+    mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(cartLookup).header("Authorization","Bearer stranger")).andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isNotFound());
+    mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(cartLookup).header("Authorization","Bearer owner")).andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk())
+      .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.id").value(group.id().toString()));
     String path="/api/v1/checkouts/"+group.id();
     mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(path)).andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isUnauthorized());
     for(String token:List.of("invalid","expired")) mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(path).header("Authorization","Bearer "+token)).andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isUnauthorized());

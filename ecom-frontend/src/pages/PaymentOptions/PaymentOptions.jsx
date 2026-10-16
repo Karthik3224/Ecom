@@ -18,7 +18,7 @@ import { getPaymentCapabilities } from '../../services/paymentApi';
 import { requirePaymentProcessing } from '../../utils/paymentAvailability';
 import * as cartApi from '../../services/cartApi';
 import { prepareCheckoutCart, finishCheckoutCart } from '../../utils/checkoutCart';
-import { createCheckoutGroup, getCheckoutGroupByKey } from '../../services/orderApi';
+import { createCheckoutGroup, getCheckoutGroupByKey, getCheckoutGroupByCart } from '../../services/orderApi';
 import { persistStoreCheckout } from '../../utils/persistedStoreCheckout';
 import { findInventoryForItem } from '../../services/inventoryApi';
 import { validateCheckoutAvailability } from '../../utils/checkoutAvailability';
@@ -330,7 +330,7 @@ const PaymentOptions = () => {
           scheduledDeliveryDate: checkout.date || null,
           scheduledDeliverySlot: checkout.slot || null,
         }));
-        const group = await persistStoreCheckout({ customerId, stores, cartApi, request: createCheckoutGroup, lookup: getCheckoutGroupByKey, checkInventory: entries => validateCheckoutAvailability(entries, lookupCheckoutInventory) });
+        const group = await persistStoreCheckout({ customerId, stores, cartApi, request: createCheckoutGroup, lookup: getCheckoutGroupByKey, lookupCart: getCheckoutGroupByCart, checkInventory: entries => validateCheckoutAvailability(entries, lookupCheckoutInventory) });
         navigate(`/checkout-group/${encodeURIComponent(group.id)}`);
       } catch (reason) {
         setError(`${resolveError(reason)} Retry checks the existing checkout before submitting again.`);

@@ -31,5 +31,6 @@ public class CheckoutController {
   }
   @GetMapping("/{id}") public CheckoutGroups.Result get(@PathVariable UUID id){return groups.get(id);}
   @GetMapping("/by-key/{key}") public CheckoutGroups.Result byKey(@PathVariable String key){return groups.getByKey(key);}
+  @GetMapping("/by-cart/{cartId}") public CheckoutGroups.Result byCart(@PathVariable UUID cartId){return groups.getByCart(cartId);}
   @PostMapping("/{id}/retry") public CheckoutGroups.Result retry(@PathVariable UUID id){return coordinator.retry(id);}
 }
