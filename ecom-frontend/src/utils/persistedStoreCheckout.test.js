@@ -112,3 +112,32 @@ test('foreign lookup and unavailable lookup cannot clear retry metadata', async 
     assert.equal(input.storage.getItem('checkout-group-attempt'), original);
   }
 });
+
+
+test('changed address or cart after an unknown submission replays original request when lookup is not found', async () => {
+  const input = fixture();
+  await assert.rejects(persistStoreCheckout({ ...input, request: async () => { throw new Error('Lost acknowledgement'); } }));
+  const saved = JSON.parse(input.storage.getItem('checkout-group-attempt'));
+  const changed = input.stores.map(store => ({ ...store, customerLatitude: 17.4, items: [{ ...store.items[0], quantity: 2 }] }));
+  const result = await persistStoreCheckout({ ...input, stores: changed,
+    lookup: async () => { throw Object.assign(new Error('Not found'), { status: 404 }); },
+    cartApi: { getCart: async () => assert.fail('Do not modify the original uncertain carts') },
+    checkInventory: async () => assert.fail('Do not inspect the changed cart before recovery'),
+    request: async (body, key) => { assert.equal(body, saved.body);assert.equal(key, saved.key);return { id: 'recovered', customerId: 'owner', state: 'PREPARED' }; },
+  });
+  assert.equal(result.id, 'recovered');
+  assert.equal(input.storage.getItem('checkout-group-attempt'), JSON.stringify(saved));
+});
+
+test('failed original-request replay retains all retry metadata', async () => {
+  const input = fixture();
+  await assert.rejects(persistStoreCheckout({ ...input, request: async () => { throw new Error('Timeout'); } }));
+  const saved = input.storage.getItem('checkout-group-attempt');
+  const changed = input.stores.map(store => ({ ...store, customerLongitude: 78.4 }));
+  await assert.rejects(persistStoreCheckout({ ...input, stores: changed,
+    lookup: async () => { throw Object.assign(new Error('Not found'), { status: 404 }); },
+    cartApi: { getCart: async () => assert.fail('No cart mutation during recovery') },
+    request: async () => { throw new Error('Mapping unavailable'); },
+  }), /Mapping unavailable/);
+  assert.equal(input.storage.getItem('checkout-group-attempt'), saved);
+});

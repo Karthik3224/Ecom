@@ -22,6 +22,13 @@ export const persistStoreCheckout = async ({ customerId, stores, cartApi, reques
       let existing;
       try { existing = await lookup(attempt.key); }
       catch (reason) { if (Number(reason.status) !== 404) throw reason; }
+      if (!existing) {
+        // A lookup can race an unacknowledged submission. Replay the exact
+        // original body/key before touching any changed cart or address.
+        const recovered = await request(attempt.body, attempt.key);
+        if (!recovered?.id || recovered.customerId !== customerId) throw new Error('Checkout Service did not return an owned checkout group. Retry the same checkout.');
+        return recovered;
+      }
       if (existing) {
         if (!existing.id || existing.customerId !== customerId) throw new Error('Checkout Service did not return an owned checkout group.');
         const changed = intent(previous) !== intent(stores);
